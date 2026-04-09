@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirBioCivic — Case Study Module</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1a1a1a;--ink2:#3a3a3c;--muted:#8e8e93;
+  --sep:rgba(0,0,0,0.09);--sep2:rgba(0,0,0,0.05);
+  --bg:#f5f5f0;--surface:#ffffff;--surface2:#f9f9f7;
+  --blue:#1a6ef5;--blue-bg:rgba(26,110,245,0.07);
+  --green:#1a9e3c;--green-bg:rgba(26,158,60,0.07);
+  --orange:#c47a00;--orange-bg:rgba(196,122,0,0.08);
+  --purple:#7c3aed;--purple-bg:rgba(124,58,237,0.07);
+  --red:#d63030;--red-bg:rgba(214,48,48,0.07);
+  --r:14px;--r-lg:20px;
+  --serif:'DM Serif Display',Georgia,serif;
+  --sans:'DM Sans',-apple-system,sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--sep);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid var(--sep);}
+.sidebar-eyebrow{font-size:10px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;}
+.sidebar-title{font-family:var(--serif);font-size:20px;line-height:1.2;color:var(--ink);}
+.sidebar-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+.step-nav{padding:12px 0;flex:1;}
+.step-item{display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent;}
+.step-item:hover{background:var(--bg);}
+.step-item.active{background:var(--blue-bg);border-left-color:var(--blue);}
+.step-item.done .step-label{color:var(--muted);}
+.step-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--sep);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--muted);transition:all 0.2s;}
+.step-item.active .step-circle{border-color:var(--blue);background:var(--blue);color:white;}
+.step-item.done .step-circle{background:var(--green);border-color:var(--green);color:white;}
+.step-label{font-size:13px;color:var(--ink2);}
+.step-item.active .step-label{color:var(--blue);font-weight:500;}
+.connector{width:1px;height:14px;background:var(--sep);margin-left:30px;}
+.sidebar-meta{padding:16px 20px;border-top:1px solid var(--sep);}
+.meta-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:6px;}
+.meta-pill:last-child{margin-bottom:0;}
+.meta-pill a{color:var(--muted);text-decoration:none;}
+.meta-pill a:hover{color:var(--blue);}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.top-bar{height:48px;border-bottom:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--surface);position:sticky;top:0;z-index:10;}
+.progress-track{flex:1;max-width:200px;height:3px;background:var(--sep);border-radius:99px;overflow:hidden;margin:0 20px;}
+.progress-fill{height:100%;background:var(--blue);border-radius:99px;transition:width 0.4s ease;}
+.top-label{font-size:12px;color:var(--muted);}
+
+/* PANELS */
+.panel-wrap{flex:1;}
+.panel{display:none;padding:48px 52px;max-width:800px;animation:fadeIn 0.22s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.panel-eyebrow{font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
+.panel-heading{font-family:var(--serif);font-size:34px;line-height:1.15;color:var(--ink);margin-bottom:16px;}
+.panel-body{font-size:15px;line-height:1.75;color:var(--ink2);}
+.gap{margin-top:14px;}
+
+.callout{border-left:2.5px solid var(--blue);padding:13px 18px;background:var(--blue-bg);border-radius:0 10px 10px 0;margin:22px 0;}
+.callout p{font-size:14px;font-style:italic;color:var(--blue);line-height:1.65;margin:0;}
+
+/* OVERVIEW LAYOUT */
+.hero-split{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;margin-top:24px;}
+.chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px;}
+.chip{font-size:11px;padding:4px 11px;border-radius:20px;background:var(--surface2);border:1px solid var(--sep);color:var(--ink2);}
+.meta-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;}
+.meta-card{background:var(--surface2);border:1px solid var(--sep);border-radius:var(--r);padding:12px 14px;}
+.meta-card-label{font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.meta-card-val{font-size:12px;color:var(--ink);line-height:1.4;}
+
+/* PLATFORM PREVIEW */
+.preview-shell{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--sep);box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;}
+.preview-bar{height:32px;background:var(--surface2);border-bottom:1px solid var(--sep2);display:flex;align-items:center;padding:0 12px;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;}
+.preview-inner{padding:14px;}
+.preview-tabs{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:10px;}
+.ptab{flex:1;text-align:center;font-size:10px;font-weight:500;padding:4px 0;border-radius:6px;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+.ptab.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;}
+.stat-card{background:var(--bg);border-radius:8px;padding:7px 9px;}
+.stat-lbl{font-size:8px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);}
+.stat-val{font-size:16px;font-weight:500;color:var(--ink);margin-top:1px;}
+.sbadge{display:inline-block;font-size:8px;font-weight:500;padding:1px 6px;border-radius:20px;margin-top:2px;}
+.bar-wrap{background:var(--bg);border-radius:8px;padding:8px 10px;}
+.bars{display:flex;align-items:flex-end;gap:5px;height:36px;margin:6px 0 4px;}
+.bar{flex:1;border-radius:3px 3px 0 0;opacity:0.75;}
+.bar-lbl{flex:1;font-size:8px;text-align:center;color:var(--muted);}
+.hm-mock{border-radius:8px;overflow:hidden;height:64px;background:linear-gradient(135deg,#bbf7d0 0%,#86efac 25%,#fde68a 50%,#fca5a5 80%,#ef4444 100%);position:relative;}
+.hm-overlay{position:absolute;bottom:5px;left:7px;background:rgba(255,255,255,0.9);border-radius:5px;padding:2px 7px;font-size:9px;font-weight:500;color:var(--ink);}
+
+/* PROCESS */
+.process-steps{display:flex;flex-direction:column;border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;margin-top:22px;}
+.proc-step{display:grid;grid-template-columns:72px 1fr;padding:15px 18px;border-bottom:1px solid var(--sep);background:var(--surface);cursor:pointer;transition:background 0.15s;gap:14px;align-items:start;}
+.proc-step:last-child{border-bottom:none;}
+.proc-step:hover{background:var(--surface2);}
+.proc-step.open{background:var(--blue-bg);}
+.proc-num{font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);padding-top:2px;}
+.proc-step.open .proc-num{color:var(--blue);}
+.proc-label{font-size:14px;font-weight:500;color:var(--ink);}
+.proc-step.open .proc-label{color:var(--blue);}
+.proc-detail{font-size:13px;color:var(--ink2);line-height:1.55;margin-top:6px;display:none;}
+.proc-step.open .proc-detail{display:block;}
+
+/* ARTIFACTS */
+.artifact-tabs{display:flex;gap:0;border:1px solid var(--sep);border-radius:var(--r) var(--r) 0 0;background:var(--surface2);overflow:hidden;margin-top:22px;}
+.atab{flex:1;text-align:center;font-size:12px;font-weight:500;padding:11px 8px;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all 0.15s;}
+.atab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--surface);}
+.atab:hover:not(.active){color:var(--ink2);background:var(--surface);}
+.artifact-panel{display:none;border:1px solid var(--sep);border-top:none;border-radius:0 0 var(--r) var(--r);background:var(--surface);padding:20px;}
+.artifact-panel.active{display:block;}
+
+.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.mod-card{padding:13px 14px;border-radius:var(--r);border:1px solid var(--sep);}
+.mod-tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:7px;}
+.mod-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;}
+.mod-sub{font-size:11px;color:var(--muted);line-height:1.4;}
+.mod-time{font-size:10px;color:var(--muted);margin-top:7px;}
+
+.audit-list{display:flex;flex-direction:column;gap:8px;}
+.audit-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--r);border:1px solid var(--sep);}
+.audit-sev{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.sev-high{background:var(--red-bg);color:var(--red);}
+.sev-med{background:var(--orange-bg);color:var(--orange);}
+.audit-text{font-size:13px;color:var(--ink2);line-height:1.5;}
+.audit-text strong{color:var(--ink);font-weight:500;}
+
+.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.pair-col-lbl{font-size:10px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:8px;}
+.pair-item{font-size:12px;color:var(--ink2);padding:7px 11px;border-radius:8px;margin-bottom:5px;line-height:1.4;}
+
+/* OUTCOME */
+.outcome-list{list-style:none;padding:0;margin:20px 0;}
+.outcome-list li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--sep);font-size:14px;line-height:1.65;color:var(--ink2);}
+.outcome-list li:last-child{border-bottom:none;}
+.odot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:8px;}
+.reflection{background:var(--surface2);border-radius:var(--r);padding:18px 22px;margin-top:22px;border:1px solid var(--sep);}
+.reflection-lbl{font-size:9px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.reflection p{font-size:14px;line-height:1.75;color:var(--ink2);}
+
+/* NAV FOOTER */
+.nav-footer{padding:22px 52px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;align-items:center;background:var(--surface);}
+.nav-btn{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding:9px 18px;border-radius:var(--r);border:1px solid var(--sep);background:var(--surface);color:var(--ink2);cursor:pointer;transition:all 0.15s;}
+.nav-btn:hover:not(:disabled){background:var(--surface2);}
+.nav-btn.primary{background:var(--blue);color:white;border-color:var(--blue);}
+.nav-btn.primary:hover:not(:disabled){background:#1559d4;}
+.nav-btn:disabled{opacity:0.3;cursor:default;}
+.step-counter{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-eyebrow">Case Study · ID Portfolio</div>
+    <div class="sidebar-title">AirBioCivic</div>
+    <div class="sidebar-sub">Jiin Hur · TC Columbia</div>
+  </div>
+  <nav class="step-nav">
+    <div class="step-item active" onclick="goTo(0)" id="nav-0"><div class="step-circle" id="circle-0">1</div><span class="step-label">Overview</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(1)" id="nav-1"><div class="step-circle" id="circle-1">2</div><span class="step-label">Problem</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(2)" id="nav-2"><div class="step-circle" id="circle-2">3</div><span class="step-label">Process</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(3)" id="nav-3"><div class="step-circle" id="circle-3">4</div><span class="step-label">Artifacts</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(4)" id="nav-4"><div class="step-circle" id="circle-4">5</div><span class="step-label">Outcome</span></div>
+  </nav>
+  <div class="sidebar-meta">
+    <div class="meta-pill">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--muted)" stroke-width="1"/><path d="M6 3.5V6l1.5 1.5" stroke="var(--muted)" stroke-width="1" stroke-linecap="round"/></svg>
+      5 sections · ~5 min
+    </div>
+    <div class="meta-pill">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="var(--muted)" stroke-width="1.2"/><path d="M4 6h4M8 4l2 2-2 2" stroke="var(--muted)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a href="https://haetalkim.github.io/tamguingAIR" target="_blank">Live platform ↗</a>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="top-bar">
+    <span class="top-label" id="top-label">Overview</span>
+    <div class="progress-track"><div class="progress-fill" id="progress" style="width:20%"></div></div>
+    <span class="top-label" id="top-counter">1 / 5</span>
+  </div>
+
+  <div class="panel-wrap">
+
+    <!-- 0: OVERVIEW -->
+    <div class="panel active" id="panel-0">
+      <div class="panel-eyebrow">Instructional Design · Platform Development · UX Audit</div>
+      <h1 class="panel-heading">Designing an inquiry system that connects air quality data to K–12 civic reasoning.</h1>
+      <div class="hero-split">
+        <div>
+          <p class="panel-body">AirBioCivic is a research-driven instructional design project combining a 6-module SSI curriculum, a live sensor data platform, and an instructor support system — all designed to turn real environmental data into civic inquiry for K–12 classrooms.</p>
+          <div class="chip-row">
+            <span class="chip">SSI Pedagogy</span><span class="chip">Needs Analysis</span><span class="chip">UX Audit</span><span class="chip">Tech Design Lead</span><span class="chip">Full-Stack Dev</span>
+          </div>
+        </div>
+        <div class="preview-shell">
+          <div class="preview-bar">
+            <div class="dot" style="background:#ff5f57"></div>
+            <div class="dot" style="background:#febc2e"></div>
+            <div class="dot" style="background:#28c840"></div>
+            <span style="font-size:10px;color:var(--muted);margin-left:6px">ABC Platform</span>
+          </div>
+          <div class="preview-inner">
+            <div class="preview-tabs">
+              <div class="ptab" onclick="switchPTab('heatmap',this)">Heat Map</div>
+              <div class="ptab active" onclick="switchPTab('analysis',this)">Analysis</div>
+              <div class="ptab" onclick="switchPTab('rawdata',this)">Raw Data</div>
+            </div>
+            <div id="pview-analysis">
+              <div class="stat-grid">
+                <div class="stat-card"><div class="stat-lbl">Mean PM2.5</div><div class="stat-val">18.4</div><span class="sbadge" style="background:var(--green-bg);color:var(--green)">Good</span></div>
+                <div class="stat-card"><div class="stat-lbl">Max</div><div class="stat-val">41.2</div><span class="sbadge" style="background:var(--orange-bg);color:var(--orange)">Moderate</span></div>
+                <div class="stat-card"><div class="stat-lbl">Groups</div><div class="stat-val">4</div><span class="sbadge" style="background:var(--blue-bg);color:var(--blue)">Active</span></div>
+              </div>
+              <div class="bar-wrap">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">PM2.5 by Group</span><span style="font-size:9px;color:var(--blue)">WHO ref: 15</span></div>
+                <div class="bars">
+                  <div class="bar" style="background:var(--green);height:38%"></div>
+                  <div class="bar" style="background:var(--orange);height:92%"></div>
+                  <div class="bar" style="background:var(--green);height:54%"></div>
+                  <div class="bar" style="background:var(--blue);height:68%"></div>
+                  <div style="flex:0 0 1px;background:var(--red);opacity:0.4;height:100%"></div>
+                </div>
+                <div style="display:flex;gap:5px"><span class="bar-lbl">G1</span><span class="bar-lbl">G2</span><span class="bar-lbl">G3</span><span class="bar-lbl">G4</span></div>
+              </div>
+            </div>
+            <div id="pview-heatmap" style="display:none">
+              <div class="hm-mock"><div class="hm-overlay">City Avg: Good · 11.2 µg/m³</div></div>
+              <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">
+                <span class="sbadge" style="background:var(--green-bg);color:var(--green);font-size:10px;padding:3px 9px">School: 18.4</span>
+                <span class="sbadge" style="background:var(--orange-bg);color:var(--orange);font-size:10px;padding:3px 9px">G2: 41.2</span>
+                <span class="sbadge" style="background:var(--blue-bg);color:var(--blue);font-size:10px;padding:3px 9px">Live · OpenAQ</span>
+              </div>
+            </div>
+            <div id="pview-rawdata" style="display:none">
+              <div style="background:var(--bg);border-radius:8px;overflow:hidden">
+                <div style="display:grid;grid-template-columns:70px 55px 55px 1fr;font-size:9px;font-weight:500;color:var(--muted);padding:6px 9px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1px solid var(--sep)"><span>Group</span><span>PM2.5</span><span>Status</span><span>Note</span></div>
+                <div style="display:grid;grid-template-columns:70px 55px 55px 1fr;font-size:10px;color:var(--ink2);padding:5px 9px;border-bottom:1px solid var(--sep2)"><span>Group 1</span><span>14.2</span><span style="color:var(--green)">Good</span><span style="color:var(--muted)">—</span></div>
+                <div style="display:grid;grid-template-columns:70px 55px 55px 1fr;font-size:10px;color:var(--ink2);padding:5px 9px;border-bottom:1px solid var(--sep2)"><span>Group 2</span><span>41.2 *</span><span style="color:var(--orange)">Mod.</span><span style="color:var(--purple);font-size:9px">Recalibrated</span></div>
+                <div style="display:grid;grid-template-columns:70px 55px 55px 1fr;font-size:10px;color:var(--ink2);padding:5px 9px"><span>Group 3</span><span>20.1</span><span style="color:var(--green)">Good</span><span style="color:var(--muted)">—</span></div>
+              </div>
+              <div style="margin-top:6px;font-size:9px;color:var(--muted)">* = annotated · original preserved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta-cards">
+        <div class="meta-card"><div class="meta-card-label">Role</div><div class="meta-card-val">Tech Design Team Lead<br>(2-person sub-team)</div></div>
+        <div class="meta-card"><div class="meta-card-label">Context</div><div class="meta-card-val">Tamgu Lab · TC Columbia<br>Multi-team project</div></div>
+        <div class="meta-card"><div class="meta-card-label">Deliverables</div><div class="meta-card-val">Platform · 6-module curriculum · Instructor Guide · UX Audit</div></div>
+        <div class="meta-card"><div class="meta-card-label">Audience</div><div class="meta-card-val">K–12 Students &<br>Classroom Instructors</div></div>
+      </div>
+    </div>
+
+    <!-- 1: PROBLEM -->
+    <div class="panel" id="panel-1">
+      <div class="panel-eyebrow">01 · Problem</div>
+      <h2 class="panel-heading">The gap between science class and real-world reasoning.</h2>
+      <p class="panel-body">K–12 environmental science instruction often treats data as something students receive rather than something they act on. Students learn about air quality in textbooks, but rarely encounter its local, civic dimensions — who is affected, why it matters in their neighborhood, and what they might do about it.</p>
+      <div class="callout"><p>How might we design a learning experience that connects real environmental data to student agency — turning passive consumption into active, civic-minded inquiry?</p></div>
+      <p class="panel-body">The design challenge was twofold: build a curriculum grounded in socioscientific inquiry (SSI), and develop a supporting platform that made live sensor data legible and meaningful for learners without a technical background.</p>
+      <p class="panel-body gap">Critically, the platform had to be <em>instructor-agnostic</em> — teachers with varying levels of technical comfort needed to facilitate the same inquiry arc without friction.</p>
+    </div>
+
+    <!-- 2: PROCESS -->
+    <div class="panel" id="panel-2">
+      <div class="panel-eyebrow">02 · Process</div>
+      <h2 class="panel-heading">From sensor data to scaffolded inquiry.</h2>
+      <p class="panel-body">An iterative design process across five phases — each informed by SSI pedagogy and the practical realities of K–12 classroom deployment. Click each step to expand.</p>
+      <div class="process-steps">
+        <div class="proc-step open" onclick="toggleProc(this)">
+          <div class="proc-num">Step 01</div>
+          <div><div class="proc-label">Needs Analysis</div><div class="proc-detail">Reviewed SSI and knowledge-building literature. Mapped learner gaps in civic data reasoning — identifying that students lacked both interpretive scaffolding and a sense of personal relevance when engaging with environmental datasets.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 02</div>
+          <div><div class="proc-label">Curriculum Design</div><div class="proc-detail">Designed a 6-module inquiry arc structured as: observe → question → investigate → annotate → argue → report. Each module mapped to specific platform features, with differentiation paths for Intro / Intermediate / Advanced learners.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 03</div>
+          <div><div class="proc-label">Platform Development</div><div class="proc-detail">Led the tech design sub-team and built the full-stack platform (React / Express / Postgres): sensor data pipeline, live heat map via OpenAQ integration, role-based access for teachers and students, and the annotation system with audit trail.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 04</div>
+          <div><div class="proc-label">UX Audit</div><div class="proc-detail">Conducted a structured audit of 4 interface screens and 3 operational guides across both teacher and student flows. Surfaced 7 issues — 4 high severity, 3 medium — including missing empty states, unclear session creation, and numbers without interpretive context.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 05</div>
+          <div><div class="proc-label">Instructor Guide Redesign</div><div class="proc-detail">Rebuilt the Instructor Curriculum Guide as a "living pair" with the platform — not static documentation, but two artifacts that evolve together. Platform changes trigger guide updates; pedagogical needs become feature requests.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: ARTIFACTS -->
+    <div class="panel" id="panel-3">
+      <div class="panel-eyebrow">03 · Artifacts</div>
+      <h2 class="panel-heading">Design artifacts produced.</h2>
+      <p class="panel-body">Each artifact was designed as part of an interconnected system. Switch between tabs to explore.</p>
+      <div class="artifact-tabs">
+        <button class="atab active" onclick="switchArtifact('curriculum',this)">Curriculum (M0–M5)</button>
+        <button class="atab" onclick="switchArtifact('uxaudit',this)">UX Audit Findings</button>
+        <button class="atab" onclick="switchArtifact('guide',this)">Platform–Guide Pair</button>
+      </div>
+      <div class="artifact-panel active" id="art-curriculum">
+        <div class="mod-grid">
+          <div class="mod-card"><span class="mod-tag" style="background:#f2f2f7;color:var(--muted)">M — 0</span><div class="mod-title">Orientation</div><div class="mod-sub">Sign-in · roles · metric names · live demo</div><div class="mod-time">≈ 1 hr · Instructor + Students</div></div>
+          <div class="mod-card"><span class="mod-tag" style="background:var(--blue-bg);color:var(--blue)">M — 1</span><div class="mod-title">Session Design</div><div class="mod-sub">Setup · metadata · hypothesis framing</div><div class="mod-time">30–45 min · Instructor-led</div></div>
+          <div class="mod-card"><span class="mod-tag" style="background:var(--green-bg);color:var(--green)">M — 2</span><div class="mod-title">Data Collection</div><div class="mod-sub">Per-group uploads · session linkage · gap checks</div><div class="mod-time">Async / field · All roles</div></div>
+          <div class="mod-card"><span class="mod-tag" style="background:var(--orange-bg);color:var(--orange)">M — 3</span><div class="mod-title">Exploratory Analysis</div><div class="mod-sub">Heat map · group comparison · prompt cards</div><div class="mod-time">1–2 hrs · Student-led</div></div>
+          <div class="mod-card"><span class="mod-tag" style="background:var(--purple-bg);color:var(--purple)">M — 4</span><div class="mod-title">Annotations & Ethics</div><div class="mod-sub">Original vs. annotated · rationale · audit trail</div><div class="mod-time">45–60 min · Students</div></div>
+          <div class="mod-card"><span class="mod-tag" style="background:var(--red-bg);color:var(--red)">M — 5</span><div class="mod-title">Reporting & Sharing</div><div class="mod-sub">CSV export · cite original vs. annotated</div><div class="mod-time">≈ 1 hr · Whole group</div></div>
+        </div>
+        <div style="margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:10px;font-size:12px;color:var(--muted)"><strong style="color:var(--ink)">Short workshop path:</strong> M0 → M3 → M4 stands as a complete SSI experience.</div>
+      </div>
+      <div class="artifact-panel" id="art-uxaudit">
+        <div class="audit-list">
+          <div class="audit-item"><span class="audit-sev sev-high">High</span><div class="audit-text"><strong>No direct data input for students</strong> — CSV import only; K–12 students preparing CSV files is unrealistic. Interim manual entry form needed.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-high">High</span><div class="audit-text"><strong>No empty state on first login</strong> — blank charts with zero values read as a broken app, not an onboarding state.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-high">High</span><div class="audit-text"><strong>Session creation entry point unclear</strong> — central to teacher flow but not surfaced in any visible tab.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-high">High</span><div class="audit-text"><strong>Numbers lack interpretive context</strong> — PM2.5 = 18 shown without WHO reference, preventing evidence-based SSI arguments.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-med">Medium</span><div class="audit-text"><strong>Raw Data defaults to all groups</strong> — students must filter across 13 columns to find their own data.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-med">Medium</span><div class="audit-text"><strong>Join Code UI ambiguous</strong> — reads as search or creation; no copy button after code is generated.</div></div>
+          <div class="audit-item"><span class="audit-sev sev-med">Medium</span><div class="audit-text"><strong>Heat Map MODE toggle unlabeled</strong> — unclear whether it switches city vs. school data.</div></div>
+        </div>
+      </div>
+      <div class="artifact-panel" id="art-guide">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Platform and curriculum guide designed as a living pair — when one changes, the other follows.</p>
+        <div class="pair-grid">
+          <div>
+            <div class="pair-col-lbl" style="color:var(--green)">Well connected</div>
+            <div class="pair-item" style="background:var(--green-bg)">Annotation ethics → M4 covers precisely</div>
+            <div class="pair-item" style="background:var(--green-bg)">Heat Map → M3 spatial pattern activity</div>
+            <div class="pair-item" style="background:var(--green-bg)">CSV export → M5 reporting workflow</div>
+          </div>
+          <div>
+            <div class="pair-col-lbl" style="color:var(--red)">Disconnected (pre-audit)</div>
+            <div class="pair-item" style="background:var(--red-bg)">Sensor upload flow → M2 had no procedure</div>
+            <div class="pair-item" style="background:var(--red-bg)">Session creation UI → screen link missing</div>
+            <div class="pair-item" style="background:var(--red-bg)">Join Code sharing → missing from checklist</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4: OUTCOME -->
+    <div class="panel" id="panel-4">
+      <div class="panel-eyebrow">04 · Outcome</div>
+      <h2 class="panel-heading">A deployable system connecting data to civic learning.</h2>
+      <ul class="outcome-list">
+        <li><span class="odot"></span><span>Delivered a fully deployed web platform with live sensor data integration, accessible without technical setup at <a href="https://haetalkim.github.io/tamguingAIR" target="_blank" style="color:var(--blue);text-decoration:none">haetalkim.github.io/tamguingAIR ↗</a></span></li>
+        <li><span class="odot"></span><span>Designed a complete 6-module K–12 inquiry curriculum grounded in socioscientific reasoning — structured to develop both scientific literacy and civic argumentation.</span></li>
+        <li><span class="odot"></span><span>Produced a redesigned Instructor Curriculum Guide reducing implementation friction, enabling teachers with varied technical backgrounds to facilitate the full inquiry arc independently.</span></li>
+        <li><span class="odot"></span><span>Conducted a structured UX audit surfacing 7 issues across 4 screens — findings directly shaped guide redesign and platform sprint backlog.</span></li>
+        <li><span class="odot"></span><span>Demonstrated end-to-end instructional design ownership: needs analysis → curriculum architecture → platform development → instructor support → iterative redesign.</span></li>
+      </ul>
+      <div class="reflection">
+        <div class="reflection-lbl">Designer's Reflection</div>
+        <p>The most significant learning came from the UX audit midway through the project. What we had designed as a "simple" instructor interface carried hidden assumptions about data literacy. Redesigning the guide forced me to think about scaffolding not just for students, but for teachers — a distinction I now treat as foundational to any learning system design.</p>
+      </div>
+    </div>
+
+  </div><!-- /panel-wrap -->
+
+  <div class="nav-footer">
+    <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Previous</button>
+    <span class="step-counter" id="footer-counter">Section 1 of 5</span>
+    <button class="nav-btn primary" id="btn-next" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+
+</div><!-- /shell -->
+
+<script>
+const labels=['Overview','Problem','Process','Artifacts','Outcome'];
+let cur=0;const total=5;
+
+function goTo(n){
+  document.getElementById('panel-'+cur).classList.remove('active');
+  const prevNav=document.getElementById('nav-'+cur);
+  prevNav.classList.remove('active');
+  if(n>cur) prevNav.classList.add('done');
+  else prevNav.classList.remove('done');
+
+  cur=n;
+  document.getElementById('panel-'+cur).classList.add('active');
+  const curNav=document.getElementById('nav-'+cur);
+  curNav.classList.remove('done');
+  curNav.classList.add('active');
+
+  document.getElementById('progress').style.width=((cur+1)/total*100)+'%';
+  document.getElementById('top-label').textContent=labels[cur];
+  document.getElementById('top-counter').textContent=(cur+1)+' / '+total;
+  document.getElementById('footer-counter').textContent='Section '+(cur+1)+' of '+total;
+  document.getElementById('btn-prev').disabled=cur===0;
+  const nextBtn=document.getElementById('btn-next');
+  nextBtn.textContent=cur===total-1?'Finish ✓':'Next →';
+  nextBtn.disabled=cur===total-1&&false;
+}
+
+function navigate(dir){const n=cur+dir;if(n>=0&&n<total)goTo(n);}
+
+function toggleProc(el){
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.proc-step').forEach(s=>s.classList.remove('open'));
+  if(!wasOpen)el.classList.add('open');
+}
+
+function switchArtifact(name,btn){
+  ['curriculum','uxaudit','guide'].forEach(n=>document.getElementById('art-'+n).classList.remove('active'));
+  document.getElementById('art-'+name).classList.add('active');
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchPTab(tab,el){
+  ['heatmap','analysis','rawdata'].forEach(t=>{
+    document.getElementById('pview-'+t).style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

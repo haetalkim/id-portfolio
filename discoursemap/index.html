@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiscourseMap — Research Design Case Study</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300;1,9..144,400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0a0f0f;--ink2:#1e2a2a;--muted:#5a7070;
+  --sep:rgba(0,40,40,0.08);--sep2:rgba(0,40,40,0.04);
+  --bg:#f4f6f5;--surface:#ffffff;--surface2:#eef1f0;
+  --teal:#0d4a4a;--teal-mid:#126060;--teal-light:#1a7878;
+  --accent:#0d9488;--accent-bg:rgba(13,148,136,0.08);
+  --amber:#92610a;--amber-bg:rgba(146,97,10,0.08);
+  --purple:#5b3d8a;--purple-bg:rgba(91,61,138,0.08);
+  --slate:#2d4a5a;
+  --red:#8a2a2a;--red-bg:rgba(138,42,42,0.08);
+  --r:8px;--r-lg:14px;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'Sora',-apple-system,sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased;min-height:100vh;}
+.shell{display:grid;grid-template-columns:258px 1fr;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--teal);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-header{padding:28px 22px 22px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.s-tag{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.32);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.s-tag::before{content:'';display:block;width:16px;height:1px;background:rgba(255,255,255,0.2);}
+.s-title{font-family:var(--serif);font-size:20px;line-height:1.2;color:white;font-weight:300;font-style:italic;margin-bottom:4px;}
+.s-sub{font-size:10px;color:rgba(255,255,255,0.3);line-height:1.6;}
+.step-nav{padding:16px 0;flex:1;}
+.step-item{display:flex;align-items:center;gap:11px;padding:9px 22px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent;}
+.step-item:hover{background:rgba(255,255,255,0.04);}
+.step-item.active{background:rgba(255,255,255,0.08);border-left-color:rgba(255,255,255,0.4);}
+.step-circle{width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,0.28);transition:all 0.2s;}
+.step-item.active .step-circle{border-color:rgba(255,255,255,0.6);color:rgba(255,255,255,0.9);}
+.step-item.done .step-circle{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.35);}
+.step-label{font-size:11px;color:rgba(255,255,255,0.34);}
+.step-item.active .step-label{color:rgba(255,255,255,0.92);font-weight:500;}
+.step-item.done .step-label{color:rgba(255,255,255,0.24);}
+.connector{width:1px;height:10px;background:rgba(255,255,255,0.07);margin-left:32px;}
+.sidebar-links{padding:14px 22px;border-top:1px solid rgba(255,255,255,0.07);}
+.slink{display:flex;align-items:center;gap:7px;font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:7px;text-decoration:none;transition:color 0.15s;}
+.slink:hover{color:rgba(255,255,255,0.58);}
+.slink:last-child{margin:0;}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.top-bar{height:46px;border-bottom:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:var(--surface);position:sticky;top:0;z-index:10;}
+.progress-track{flex:1;max-width:160px;height:2px;background:var(--sep);border-radius:99px;overflow:hidden;margin:0 20px;}
+.progress-fill{height:100%;background:var(--teal);border-radius:99px;transition:width 0.4s ease;}
+.top-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;}
+
+/* PANELS */
+.panel-wrap{flex:1;}
+.panel{display:none;padding:50px 54px;max-width:820px;animation:fadeUp 0.2s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.panel-eyebrow{font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.panel-heading{font-family:var(--serif);font-size:30px;line-height:1.2;color:var(--ink);margin-bottom:18px;font-weight:300;}
+.panel-body{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:300;}
+.gap{margin-top:14px;}
+.callout{border-left:2px solid var(--teal-light);padding:13px 18px;background:rgba(13,74,74,0.04);border-radius:0 var(--r) var(--r) 0;margin:22px 0;}
+.callout p{font-size:13px;font-style:italic;font-family:var(--serif);color:var(--teal-mid);line-height:1.75;margin:0;font-weight:300;}
+.sec-head{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--sep);}
+
+/* META */
+.meta-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:20px;}
+.meta-card{background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);padding:12px 14px;}
+.mc-label{font-size:8px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.mc-val{font-size:11px;color:var(--ink);line-height:1.5;font-weight:500;}
+
+/* OVERVIEW */
+.overview-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start;}
+.chip-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;}
+.chip{font-size:10px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--surface2);border:1px solid var(--sep);color:var(--ink2);}
+
+/* PROTOTYPE PREVIEW */
+.proto-shell{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--sep);box-shadow:0 6px 24px rgba(0,0,0,0.07);overflow:hidden;}
+.proto-bar{height:32px;background:#1e3a5f;display:flex;align-items:center;padding:0 12px;gap:6px;}
+.pb-dot{width:7px;height:7px;border-radius:50%;opacity:0.45;}
+.proto-canvas{width:100%;height:190px;background:#f8f9fb;position:relative;overflow:hidden;cursor:pointer;}
+.proto-label{position:absolute;top:8px;left:10px;font-size:8px;font-weight:600;color:#0d4a4a;background:white;padding:3px 8px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:flex;align-items:center;gap:4px;z-index:2;}
+.proto-label::before{content:'';width:6px;height:6px;border-radius:50%;background:#22c55e;display:block;}
+.proto-hint{position:absolute;bottom:8px;right:10px;font-size:8px;color:#94a3b8;font-weight:400;}
+.proto-footer{padding:7px 12px;background:var(--surface2);border-top:1px solid var(--sep);display:flex;gap:12px;font-size:8px;color:var(--muted);align-items:center;}
+.ldot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:2px;vertical-align:middle;}
+
+/* SCREENSHOTS */
+.shot-wrap{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--sep);box-shadow:0 4px 16px rgba(0,0,0,0.07);margin:16px 0;}
+.shot-cap{padding:7px 14px;background:var(--surface2);border-top:1px solid var(--sep);font-size:10px;color:var(--muted);}
+.shot-cap strong{color:var(--ink2);font-weight:500;}
+
+/* THEORY GRID */
+.theory-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.theory-card{padding:13px 15px;background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);border-top:2px solid var(--teal-light);}
+.t-label{font-size:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal-mid);margin-bottom:5px;}
+.t-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.t-body{font-size:11px;color:var(--muted);line-height:1.6;font-weight:300;}
+
+/* FEATURE TABLE */
+.feat-rows{display:flex;flex-direction:column;border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;margin-top:14px;}
+.feat-row{display:grid;grid-template-columns:150px 1fr 1fr;border-bottom:1px solid var(--sep);background:var(--surface);}
+.feat-row:last-child{border-bottom:none;}
+.feat-row:nth-child(even){background:var(--surface2);}
+.feat-cell{padding:10px 13px;font-size:11px;color:var(--ink2);line-height:1.55;font-weight:300;border-right:1px solid var(--sep);}
+.feat-cell:last-child{border-right:none;}
+.feat-cell.hd{background:var(--teal);color:white;font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:9px 13px;}
+.feat-name{font-weight:600;color:var(--ink);font-size:11px;}
+
+/* PROCESS */
+.proc-steps{display:flex;flex-direction:column;border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;margin-top:18px;}
+.proc-step{display:grid;grid-template-columns:70px 1fr;padding:13px 16px;border-bottom:1px solid var(--sep);background:var(--surface);cursor:pointer;transition:background 0.15s;gap:12px;align-items:start;}
+.proc-step:last-child{border-bottom:none;}
+.proc-step:hover{background:var(--surface2);}
+.proc-step.open{background:rgba(13,74,74,0.04);}
+.p-num{font-size:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-top:2px;}
+.proc-step.open .p-num{color:var(--teal-mid);}
+.p-label{font-size:12px;font-weight:600;color:var(--ink);}
+.proc-step.open .p-label{color:var(--teal);}
+.p-detail{font-size:11px;color:var(--muted);line-height:1.7;margin-top:5px;display:none;font-weight:300;}
+.proc-step.open .p-detail{display:block;color:var(--ink2);}
+
+/* EVAL */
+.persona-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
+.persona-card{padding:13px 14px;border-radius:var(--r);border:1px solid var(--sep);background:var(--surface);}
+.p-tag{font-size:9px;font-weight:600;padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:7px;}
+.p-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.p-body{font-size:11px;color:var(--muted);line-height:1.55;font-weight:300;}
+.p-kb{font-size:10px;font-weight:600;margin-top:8px;padding:3px 8px;border-radius:3px;display:inline-block;}
+.finding-rows{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.finding-row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:var(--r);border:1px solid var(--sep);background:var(--surface);}
+.f-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.f-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.f-body{font-size:11px;color:var(--muted);line-height:1.6;font-weight:300;}
+
+/* OUTCOME */
+.stat-hi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;}
+.shi{background:var(--teal);border-radius:var(--r);padding:16px;text-align:center;}
+.shi-val{font-family:var(--serif);font-size:26px;color:white;margin-bottom:4px;font-weight:300;font-style:italic;}
+.shi-label{font-size:9px;color:rgba(255,255,255,0.4);line-height:1.5;font-weight:300;}
+.out-list{list-style:none;padding:0;margin:18px 0;}
+.out-list li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--sep);font-size:12px;line-height:1.75;color:var(--ink2);font-weight:300;}
+.out-list li:last-child{border-bottom:none;}
+.odot{width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:9px;}
+.refl{background:var(--surface2);border-radius:var(--r);padding:16px 20px;margin-top:20px;border:1px solid var(--sep);}
+.refl-lbl{font-size:8px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.refl p{font-size:12px;line-height:1.85;color:var(--ink2);font-style:italic;font-family:var(--serif);font-weight:300;}
+
+/* NAV FOOTER */
+.nav-footer{padding:20px 54px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;align-items:center;background:var(--surface);}
+.nav-btn{font-size:11px;font-weight:600;padding:8px 18px;border-radius:var(--r);border:1px solid var(--sep);background:var(--surface);color:var(--ink2);cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;}
+.nav-btn:hover:not(:disabled){background:var(--surface2);}
+.nav-btn.primary{background:var(--teal);color:white;border-color:var(--teal);}
+.nav-btn.primary:hover:not(:disabled){background:var(--teal-mid);}
+.nav-btn:disabled{opacity:0.25;cursor:default;}
+.step-counter{font-size:10px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="s-tag">Research · EdTech Design</div>
+    <div class="s-title">DiscourseMap</div>
+    <div class="s-sub">Canvas LMS Plugin · Epistemic Visibility<br>Cogmos Lab · TC Columbia · 2025</div>
+  </div>
+  <nav class="step-nav">
+    <div class="step-item active" onclick="goTo(0)" id="nav-0"><div class="step-circle">1</div><span class="step-label">Overview</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(1)" id="nav-1"><div class="step-circle">2</div><span class="step-label">Problem</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(2)" id="nav-2"><div class="step-circle">3</div><span class="step-label">Design</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(3)" id="nav-3"><div class="step-circle">4</div><span class="step-label">Process</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(4)" id="nav-4"><div class="step-circle">5</div><span class="step-label">Evaluation</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(5)" id="nav-5"><div class="step-circle">6</div><span class="step-label">Outcome</span></div>
+  </nav>
+  <div class="sidebar-links">
+    <a class="slink" href="https://discourse-map-run.vercel.app/" target="_blank">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="rgba(255,255,255,0.28)" stroke-width="1"/><path d="M3 5h4M5 3l2 2-2 2" stroke="rgba(255,255,255,0.28)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Live prototype ↗
+    </a>
+    <a class="slink" href="#" target="_blank">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1.5" y="1" width="7" height="8" rx="1" stroke="rgba(255,255,255,0.28)" stroke-width="0.9"/><path d="M3 4h4M3 6h4M3 8h2" stroke="rgba(255,255,255,0.28)" stroke-width="0.7" stroke-linecap="round"/></svg>
+      Design paper
+    </a>
+    <a class="slink" href="#" target="_blank">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 7l2-3 2 2L8 2" stroke="rgba(255,255,255,0.28)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Synthetic evaluation data
+    </a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="top-bar">
+    <span class="top-label" id="top-label">Overview</span>
+    <div class="progress-track"><div class="progress-fill" id="progress" style="width:16.6%"></div></div>
+    <span class="top-label" id="top-counter">1 / 6</span>
+  </div>
+
+  <div class="panel-wrap">
+
+    <!-- 0: OVERVIEW -->
+    <div class="panel active" id="panel-0">
+      <div class="panel-eyebrow">Cogmos Lab · TC Columbia · Research Design</div>
+      <h1 class="panel-heading">Making the invisible structure of academic discourse visible — in real time.</h1>
+      <div class="overview-split">
+        <div>
+          <p class="panel-body">DiscourseMap is a Canvas LMS plugin that transforms flat, chronological discussion threads into interactive spatial maps of thematic structure. Grounded in Knowledge Building theory and Group Awareness Tools research, it surfaces epistemic gaps, thematic clusters, and connection opportunities — scaffolding deeper participation without replacing learner agency.</p>
+          <div class="chip-row">
+            <span class="chip">Knowledge Building</span><span class="chip">Group Awareness Tools</span><span class="chip">AI Scaffolding</span><span class="chip">Canvas Plugin</span><span class="chip">React</span>
+          </div>
+        </div>
+        <div class="proto-shell">
+          <div class="proto-bar">
+            <div class="pb-dot" style="background:#ff5f57"></div>
+            <div class="pb-dot" style="background:#febc2e"></div>
+            <div class="pb-dot" style="background:#28c840"></div>
+            <span style="font-size:9px;color:rgba(255,255,255,0.38);margin-left:5px;font-weight:500;">DiscourseMap — Canvas</span>
+          </div>
+          <div class="proto-canvas" onclick="cycleView()">
+            <div class="proto-label" id="protoLabel">● Discourse Map — 8 posts analyzed</div>
+            <div class="proto-hint" id="protoHint">Click to cycle views</div>
+            <svg id="protoSvg" width="100%" height="190" style="position:absolute;top:0;left:0;"></svg>
+          </div>
+          <div class="proto-footer">
+            <span><span class="ldot" style="background:#7c6fcd"></span>Clustered</span>
+            <span><span class="ldot" style="background:#a8d5a2"></span>Emerging</span>
+            <span>— Connection</span>
+            <span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border:1px dashed #aaa;border-radius:50%;display:inline-block;"></span>Gap</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta-cards">
+        <div class="meta-card"><div class="mc-label">Role</div><div class="mc-val">Research Designer<br>Cogmos Lab, TC</div></div>
+        <div class="meta-card"><div class="mc-label">Grounding</div><div class="mc-val">KB · GAT · Multimodal<br>AI Scaffolding</div></div>
+        <div class="meta-card"><div class="mc-label">Deliverables</div><div class="mc-val">Prototype · Paper<br>Educator Guide · Eval</div></div>
+        <div class="meta-card"><div class="mc-label">Status</div><div class="mc-val">Prototype live<br>IRB study pending</div></div>
+      </div>
+    </div>
+
+    <!-- 1: PROBLEM -->
+    <div class="panel" id="panel-1">
+      <div class="panel-eyebrow">01 · Problem</div>
+      <h2 class="panel-heading">Graduate discussion forums produce parallel monologues — not knowledge building.</h2>
+      <p class="panel-body">Asynchronous discussion in graduate education is designed to support reflective, dialogic learning. In practice, students post minimally, choose reply targets by convenience, and stop once they meet formal requirements. This isn't a motivation problem — it's a structural one.</p>
+      <div class="callout"><p>When the epistemic structure of a discussion is invisible, learners can't identify where their contribution would add value. They default to agreement, repetition, and surface-level participation — not because they lack ideas, but because the interface gives them no map.</p></div>
+      <p class="panel-body">Standard LMS boards present posts as flat chronological threads. Dominant interpretive frames emerge early; subsequent participants repeat rather than challenge them; epistemic diversity declines over time. Participation quantity metrics look fine. Knowledge-building quality does not.</p>
+      <div class="theory-grid" style="margin-top:20px;">
+        <div class="theory-card"><div class="t-label">Root Cause A</div><div class="t-title">Epistemic Invisibility</div><div class="t-body">Learners can't see where ideas converge or diverge, which perspectives dominate, or which areas are unexplored — so they can't make purposeful contributions.</div></div>
+        <div class="theory-card"><div class="t-label">Root Cause B</div><div class="t-title">Structural Fragmentation</div><div class="t-body">Thread-based UI makes it impossible to grasp relationships among ideas or connect across contributions. Discourse stays fragmented; cumulative advancement fails.</div></div>
+        <div class="theory-card"><div class="t-label">Root Cause C</div><div class="t-title">Cognitive Overload</div><div class="t-body">Text-heavy linear interfaces impose high cognitive burden on interpreting complex academic discourse — making it easier to post something simple than something substantive.</div></div>
+        <div class="theory-card"><div class="t-label">Root Cause D</div><div class="t-title">No Purposeful Entry Point</div><div class="t-body">Without visibility into what's missing, learners can't identify unique contribution opportunities. Gaps stay invisible; the easiest move is always to agree with what's there.</div></div>
+      </div>
+    </div>
+
+    <!-- 2: DESIGN -->
+    <div class="panel" id="panel-2">
+      <div class="panel-eyebrow">02 · Design</div>
+      <h2 class="panel-heading">Three mechanisms. One principle: intervene at the moment of contribution.</h2>
+      <p class="panel-body">DiscourseMap is designed as a complementary layer on Canvas — not a replacement. Students continue to read and post in the familiar thread interface; the map provides navigational context and epistemic orientation beneath it.</p>
+      <div class="shot-wrap">
+        <img src="dm_screen_0.jpg" alt="DiscourseMap cluster view" style="width:100%;display:block;">
+        <div class="shot-cap"><strong>Cluster View</strong> — AI-driven thematic clustering transforms the discussion thread into a spatial map. Solid circles = active themes (size = post volume). Dashed circles = unexplored gaps.</div>
+      </div>
+      <div class="sec-head" style="margin-top:22px;">Core Design Mechanisms</div>
+      <div class="feat-rows">
+        <div class="feat-row">
+          <div class="feat-cell hd">Feature</div><div class="feat-cell hd">What it does</div><div class="feat-cell hd">Design rationale</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-cell"><div class="feat-name">Epistemic Visibility</div></div>
+          <div class="feat-cell">Transforms flat thread into spatial map of thematic clusters, updating in real time as posts are added.</div>
+          <div class="feat-cell">Makes discourse structure legible within the environment where learners work, not apart from it (Bodemer et al., 2018).</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-cell"><div class="feat-name">Gap Indicators</div></div>
+          <div class="feat-cell">Dashed-outline nodes mark underexplored areas; clicking opens a reply flow seeded for first contributions in that theme.</div>
+          <div class="feat-cell">Transforms absence from invisible to actionable — a passive observation becomes an active invitation (Scardamalia & Bereiter, 2006).</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-cell"><div class="feat-name">Epistemic Prompts</div></div>
+          <div class="feat-cell">Context-sensitive scaffolding in the reply box: cluster-aware, map-wide, or gap-specific depending on where the student is responding.</div>
+          <div class="feat-cell">Effective when immediate, personalized, and calibrated to learner's current epistemic position — not generic (Ba et al., 2025).</div>
+        </div>
+      </div>
+      <div class="shot-wrap" style="margin-top:18px;">
+        <img src="dm_screen_2.jpg" alt="DiscourseMap epistemic prompts" style="width:100%;display:block;">
+        <div class="shot-cap"><strong>Epistemic Prompts</strong> — Context-sensitive scaffolding appears in the reply box. Prompts shift based on where in the map the student is responding: cluster-aware, map-wide, or gap-seeding.</div>
+      </div>
+    </div>
+
+    <!-- 3: PROCESS -->
+    <div class="panel" id="panel-3">
+      <div class="panel-eyebrow">03 · Process</div>
+      <h2 class="panel-heading">From literature review to deployable prototype — in iterative cycles.</h2>
+      <p class="panel-body">The design process followed an iterative research-design methodology: theoretical grounding first, then prototype construction, then synthetic formative evaluation, then refinement before IRB-approved human participant testing.</p>
+      <div class="proc-steps">
+        <div class="proc-step open" onclick="toggleProc(this)">
+          <div class="p-num">Phase 01</div>
+          <div><div class="p-label">Theoretical Grounding</div>
+          <div class="p-detail">Synthesized four theoretical frameworks: Knowledge Building (Scardamalia & Bereiter, 2006), Group Awareness Tools (Bodemer et al., 2018), Multimodal Visualization (Jang & Lee, 2024), and AI-mediated Scaffolding (Ba et al., 2025). Identified the convergent claim: making epistemic structure visible supports more purposeful, knowledge-building-oriented participation.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="p-num">Phase 02</div>
+          <div><div class="p-label">Design Rationale & Positioning</div>
+          <div class="p-detail">Positioned DiscourseMap as a complementary and compensatory Canvas intervention. Differentiated from Packback (inquiry-first) and Yellowdig (gamification) by focusing on spatial synthesis of collective knowledge. Three core design decisions: analysis-view not replacement forum, actionable gaps not merely indicative, context-sensitive prompts not generic.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="p-num">Phase 03</div>
+          <div><div class="p-label">Prototype Development</div>
+          <div class="p-detail">Built as a React application deployed on Vercel. Implemented AI-driven thematic clustering, gap indicator visualization, connection line rendering with hover-reveal conceptual bridges, and context-sensitive epistemic prompt generation. Constructed three scenario fixture files (Surface, Deep, Polarized) with structured session logging for synthetic evaluation.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="p-num">Phase 04</div>
+          <div><div class="p-label">Synthetic Formative Evaluation</div>
+          <div class="p-detail">Designed a crossed factorial evaluation: 3 epistemic personas (Minimum Complier, Surface Engager, Curious Builder) × 3 discussion scenarios (Surface, Deep, Polarized) = 15 synthetic sessions. Grounded personas in Van Aalst's (2009) KB discourse taxonomy. Session logging captured cluster navigation, prompt engagement, reply content, and cross-cluster behavior.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="p-num">Phase 05</div>
+          <div><div class="p-label">Educator Guide & IRB Preparation</div>
+          <div class="p-detail">Produced an Educator Guide with classroom-ready facilitation scripts. Drafted IRB application for human participant user testing (Columbia graduate students, between-subjects design). Synthetic evaluation findings informed specific design refinements — consensus warning threshold recalibration, and more direct scaffolding pathways toward gap engagement — prior to live deployment.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4: EVALUATION -->
+    <div class="panel" id="panel-4">
+      <div class="panel-eyebrow">04 · Evaluation</div>
+      <h2 class="panel-heading">Synthetic formative evaluation: 15 sessions, three epistemic conditions.</h2>
+      <p class="panel-body">Before human participant testing, a structured synthetic evaluation tested DiscourseMap's core mechanisms against the range of epistemic conditions the tool is designed to address — from minimal engagement to entrenched polarization.</p>
+      <div class="sec-head" style="margin-top:20px;">Epistemic Personas — grounded in Van Aalst (2009)</div>
+      <div class="persona-cards">
+        <div class="persona-card">
+          <span class="p-tag" style="background:var(--red-bg);color:var(--red)">Minimum Complier</span>
+          <div class="p-name">Jennifer</div>
+          <div class="p-body">Dismissed all prompts in 302–303ms — too fast to read. 1 cluster per session. No gap engagement. No cross-cluster replies across all 3 scenarios.</div>
+          <span class="p-kb" style="background:var(--surface2);color:var(--muted)">KB: Knowledge Sharing</span>
+        </div>
+        <div class="persona-card">
+          <span class="p-tag" style="background:var(--amber-bg);color:var(--amber)">Surface Engager</span>
+          <div class="p-name">Stella & Liz</div>
+          <div class="p-body">Brief prompt exposure (602–604ms). Extended prior posts with personal experience. Stayed within single clusters. No gap navigation.</div>
+          <span class="p-kb" style="background:var(--surface2);color:var(--muted)">KB: Knowledge Construction</span>
+        </div>
+        <div class="persona-card">
+          <span class="p-tag" style="background:var(--accent-bg);color:var(--accent)">Curious Builder</span>
+          <div class="p-name">Addison & Matty</div>
+          <div class="p-body">Selected prompt starters; navigated gap clusters; posted with multi-cluster attribution (2–3 regions). Generated all cross-cluster synthesis events.</div>
+          <span class="p-kb" style="background:var(--accent-bg);color:var(--accent)">KB: Knowledge Creation</span>
+        </div>
+      </div>
+      <div class="sec-head" style="margin-top:20px;">Key Findings</div>
+      <div class="finding-rows">
+        <div class="finding-row">
+          <span class="f-badge" style="background:var(--teal);color:white">F1</span>
+          <div><div class="f-title">Prompt dismissal time reliably indexes scaffolding engagement</div><div class="f-body">302–303ms (Jennifer) = too fast to read. 602–604ms (Stella/Liz) = brief exposure, no selection. Curious Builders triggered prompt_inserted events but promptStarterUsed remained false — scaffolding influenced contribution direction without determining content. Productive, not prescriptive.</div></div>
+        </div>
+        <div class="finding-row">
+          <span class="f-badge" style="background:var(--teal-mid);color:white">F2</span>
+          <div><div class="f-title">Gap engagement was exclusive to Curious Builder personas</div><div class="f-body">Addison and Matty navigated to and posted in gap clusters in every scenario. Jennifer, Stella, and Liz posted exclusively within pre-existing clusters across all 9 sessions. Gap indicators were perceptually available to all — only Curious Builders translated visibility into action.</div></div>
+        </div>
+        <div class="finding-row">
+          <span class="f-badge" style="background:var(--slate);color:white">F3</span>
+          <div><div class="f-title">The Deep scenario produced the most distributed epistemic structure</div><div class="f-body">Deep: 23 posts across 5 clusters, 0 remaining gaps at session close. Polarized: persistent structural tension — bridging contributions insufficient to resolve consensus warnings. Surface: eliminated initial gaps but retained consensus warning in Cognitive Offloading cluster.</div></div>
+        </div>
+        <div class="finding-row">
+          <span class="f-badge" style="background:var(--purple);color:white">F4</span>
+          <div><div class="f-title">extra_themes_set events reveal the bridging mechanism in action</div><div class="f-body">When Curious Builders posted into gap clusters, they consistently triggered multi-cluster attribution. Addison's instructional-design post: attributed to [instructional-design, cognitive-offloading, metacognition-ai]. This cross-cluster attribution is precisely the knowledge-building behavior the tool is designed to support (Scardamalia & Bereiter, 2006).</div></div>
+        </div>
+      </div>
+      <div class="shot-wrap" style="margin-top:18px;">
+        <img src="dm_screen_1.jpg" alt="DiscourseMap connection view" style="width:100%;display:block;">
+        <div class="shot-cap"><strong>Connection View</strong> — Hover over connection lines to reveal conceptual bridges. Dashed lines signal unwritten bridges — active contribution opportunities for learners.</div>
+      </div>
+    </div>
+
+    <!-- 5: OUTCOME -->
+    <div class="panel" id="panel-5">
+      <div class="panel-eyebrow">05 · Outcome</div>
+      <h2 class="panel-heading">A research-grounded prototype that makes epistemic structure actionable — not just visible.</h2>
+      <div class="stat-hi">
+        <div class="shi"><div class="shi-val">4</div><div class="shi-label">Theoretical frameworks integrated into a coherent design rationale</div></div>
+        <div class="shi"><div class="shi-val">15</div><div class="shi-label">Synthetic sessions across 3 personas × 3 epistemic scenarios</div></div>
+        <div class="shi"><div class="shi-val">3</div><div class="shi-label">Core mechanisms with distinct theoretical grounding each</div></div>
+      </div>
+      <ul class="out-list">
+        <li><span class="odot"></span><span>Delivered a live Canvas LMS plugin prototype (discourse-map-run.vercel.app) that transforms discussion threads into interactive spatial maps — deployed without requiring external login or platform migration.</span></li>
+        <li><span class="odot"></span><span>Synthesized four theoretical frameworks into a coherent design rationale with measurable learning goals aligned to Barzilai & Chinn's (2018) epistemic education framework — demonstrating research-to-design translation.</span></li>
+        <li><span class="odot"></span><span>Conducted a structured synthetic formative evaluation that provided design-relevant evidence before live user testing: gap visibility alone is insufficient for lower-engagement participants; direct scaffolding pathways toward gap engagement are needed.</span></li>
+        <li><span class="odot"></span><span>Produced an Educator Guide with classroom-ready facilitation scripts, enabling instructors with varying technical confidence to introduce DiscourseMap without disrupting existing participation norms.</span></li>
+        <li><span class="odot"></span><span>Identified specific calibration targets for the next iteration: consensus warning threshold recalibration and more direct scaffolding pathways toward gap engagement for lower-engagement learner profiles.</span></li>
+      </ul>
+      <div class="refl">
+        <div class="refl-lbl">Designer's Reflection</div>
+        <p>The synthetic evaluation's most informative finding wasn't about what worked — it was about who it worked for. Gap indicators were perceptually available to every simulated participant, but only the Curious Builders acted on them. That asymmetry suggests the core design problem isn't visibility at all; it's the step between seeing an opportunity and feeling licensed to take it. The next iteration needs to investigate what closes that gap for lower-engagement learners — not more visual salience, but a different kind of scaffolded invitation.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav-footer">
+    <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Previous</button>
+    <span class="step-counter" id="footer-counter">Section 1 of 6</span>
+    <button class="nav-btn primary" id="btn-next" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+</div>
+
+<script>
+const labels=['Overview','Problem','Design','Process','Evaluation','Outcome'];
+let cur=0;const total=6;
+function goTo(n){
+  document.getElementById('panel-'+cur).classList.remove('active');
+  const pn=document.getElementById('nav-'+cur);
+  pn.classList.remove('active');
+  if(n>cur)pn.classList.add('done');else pn.classList.remove('done');
+  cur=n;
+  document.getElementById('panel-'+cur).classList.add('active');
+  const cn=document.getElementById('nav-'+cur);
+  cn.classList.remove('done');cn.classList.add('active');
+  document.getElementById('progress').style.width=((cur+1)/total*100).toFixed(1)+'%';
+  document.getElementById('top-label').textContent=labels[cur];
+  document.getElementById('top-counter').textContent=(cur+1)+' / '+total;
+  document.getElementById('footer-counter').textContent='Section '+(cur+1)+' of '+total;
+  document.getElementById('btn-prev').disabled=cur===0;
+  document.getElementById('btn-next').textContent=cur===total-1?'Finish ✓':'Next →';
+}
+function navigate(dir){const n=cur+dir;if(n>=0&&n<total)goTo(n);}
+function toggleProc(el){
+  const was=el.classList.contains('open');
+  document.querySelectorAll('.proc-step').forEach(s=>s.classList.remove('open'));
+  if(!was)el.classList.add('open');
+}
+
+// Cluster map animation
+const views=[
+  {label:'● Discourse Map — 8 posts analyzed',hint:'Cluster view · click to explore',draw:drawClusters},
+  {label:'● Discourse Map — connections active',hint:'Connection view',draw:drawConnections},
+  {label:'● Discourse Map — gaps highlighted',hint:'Gap view',draw:drawGaps},
+];
+let vi=0;
+function cycleView(){vi=(vi+1)%views.length;renderView();}
+function renderView(){
+  document.getElementById('protoLabel').textContent=views[vi].label;
+  document.getElementById('protoHint').textContent=views[vi].hint;
+  views[vi].draw();
+}
+function drawClusters(){
+  document.getElementById('protoSvg').innerHTML=`
+    <line x1="38%" y1="45%" x2="62%" y2="36%" stroke="#cbd5e1" stroke-width="1.2"/>
+    <line x1="62%" y1="36%" x2="78%" y2="57%" stroke="#cbd5e1" stroke-width="1"/>
+    <line x1="38%" y1="45%" x2="24%" y2="63%" stroke="#cbd5e1" stroke-width="1"/>
+    <circle cx="15%" cy="30%" r="20" fill="none" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="15%" y="28%" text-anchor="middle" font-size="9" fill="#aaa">?</text>
+    <text x="15%" y="35%" text-anchor="middle" font-size="6.5" fill="#aaa" font-family="Sora,sans-serif" font-style="italic">Educational</text>
+    <text x="15%" y="41%" text-anchor="middle" font-size="6.5" fill="#aaa" font-family="Sora,sans-serif" font-style="italic">Implications</text>
+    <circle cx="38%" cy="45%" r="30" fill="#7c6fcd" opacity="0.78"/>
+    <text x="38%" y="43%" text-anchor="middle" font-size="7.5" font-weight="600" fill="white" font-family="Sora,sans-serif">Social Media &amp;</text>
+    <text x="38%" y="50%" text-anchor="middle" font-size="7" font-weight="600" fill="white" font-family="Sora,sans-serif">Bias Awareness</text>
+    <text x="38%" y="57%" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.7)" font-family="Sora,sans-serif">4 posts</text>
+    <circle cx="62%" cy="36%" r="15" fill="#a8d5a2" opacity="0.85"/>
+    <text x="62%" y="34%" text-anchor="middle" font-size="6.5" fill="#2d4a2d" font-family="Sora,sans-serif" font-weight="600">AI Tools &amp;</text>
+    <text x="62%" y="40%" text-anchor="middle" font-size="6.5" fill="#2d4a2d" font-family="Sora,sans-serif" font-weight="600">Cognitive Bias</text>
+    <circle cx="78%" cy="57%" r="12" fill="#a8d5a2" opacity="0.65"/>
+    <text x="78%" y="55%" text-anchor="middle" font-size="6" fill="#2d4a2d" font-family="Sora,sans-serif">Heuristics &amp;</text>
+    <text x="78%" y="61%" text-anchor="middle" font-size="6" fill="#2d4a2d" font-family="Sora,sans-serif">Design</text>
+    <circle cx="24%" cy="63%" r="10" fill="#a8d5a2" opacity="0.55"/>
+    <text x="24%" y="66%" text-anchor="middle" font-size="6" fill="#2d4a2d" font-family="Sora,sans-serif">Media</text>
+  `;
+}
+function drawConnections(){
+  document.getElementById('protoSvg').innerHTML=`
+    <line x1="38%" y1="45%" x2="62%" y2="36%" stroke="#0d9488" stroke-width="2.2" opacity="0.85"/>
+    <line x1="62%" y1="36%" x2="78%" y2="57%" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="38%" y1="45%" x2="24%" y2="63%" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>
+    <rect x="22%" y="12" width="136" height="32" rx="4" fill="white" stroke="#0d9488" stroke-width="1" transform="translate(-18,0)"/>
+    <text x="38%" y="27" text-anchor="middle" font-size="7.5" fill="#0d4a4a" font-family="Sora,sans-serif" font-weight="600">Social Media ↔ AI Tools</text>
+    <text x="38%" y="38" text-anchor="middle" font-size="6.5" fill="#5a7070" font-family="Sora,sans-serif">Both discuss algorithmic influence on cognition</text>
+    <circle cx="15%" cy="30%" r="20" fill="none" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="15%" y="33%" text-anchor="middle" font-size="6.5" fill="#aaa" font-family="Sora,sans-serif" font-style="italic">Educational</text>
+    <circle cx="38%" cy="45%" r="30" fill="#7c6fcd" opacity="0.78"/>
+    <text x="38%" y="44%" text-anchor="middle" font-size="7.5" font-weight="600" fill="white" font-family="Sora,sans-serif">Social Media &amp;</text>
+    <text x="38%" y="51%" text-anchor="middle" font-size="7" font-weight="600" fill="white" font-family="Sora,sans-serif">Bias Awareness</text>
+    <circle cx="62%" cy="36%" r="15" fill="#a8d5a2" opacity="0.85"/>
+    <text x="62%" y="38%" text-anchor="middle" font-size="6.5" fill="#2d4a2d" font-family="Sora,sans-serif" font-weight="600">AI Tools</text>
+    <circle cx="78%" cy="57%" r="12" fill="#a8d5a2" opacity="0.65"/>
+    <circle cx="24%" cy="63%" r="10" fill="#a8d5a2" opacity="0.55"/>
+  `;
+}
+function drawGaps(){
+  document.getElementById('protoSvg').innerHTML=`
+    <line x1="38%" y1="45%" x2="62%" y2="36%" stroke="#cbd5e1" stroke-width="1"/>
+    <line x1="62%" y1="36%" x2="78%" y2="57%" stroke="#cbd5e1" stroke-width="1"/>
+    <circle cx="15%" cy="30%" r="22" fill="rgba(91,61,138,0.1)" stroke="#5b3d8a" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="15%" y="27%" text-anchor="middle" font-size="8" fill="#5b3d8a" font-family="Sora,sans-serif" font-weight="600">GAP</text>
+    <text x="15%" y="34%" text-anchor="middle" font-size="6.5" fill="#5b3d8a" font-family="Sora,sans-serif">Educational</text>
+    <text x="15%" y="40%" text-anchor="middle" font-size="6.5" fill="#5b3d8a" font-family="Sora,sans-serif">Implications</text>
+    <text x="15%" y="22%" text-anchor="middle" font-size="11" fill="#5b3d8a">+</text>
+    <circle cx="83%" cy="73%" r="16" fill="rgba(91,61,138,0.08)" stroke="#5b3d8a" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="83%" y="71%" text-anchor="middle" font-size="7.5" fill="#5b3d8a" font-family="Sora,sans-serif" font-weight="600">GAP</text>
+    <text x="83%" y="77%" text-anchor="middle" font-size="6.5" fill="#5b3d8a" font-family="Sora,sans-serif">Policy &amp; Governance</text>
+    <text x="83%" y="66%" text-anchor="middle" font-size="10" fill="#5b3d8a">+</text>
+    <circle cx="38%" cy="45%" r="30" fill="#7c6fcd" opacity="0.78"/>
+    <text x="38%" y="44%" text-anchor="middle" font-size="7.5" font-weight="600" fill="white" font-family="Sora,sans-serif">Social Media &amp;</text>
+    <text x="38%" y="51%" text-anchor="middle" font-size="7" font-weight="600" fill="white" font-family="Sora,sans-serif">Bias Awareness</text>
+    <circle cx="62%" cy="36%" r="15" fill="#a8d5a2" opacity="0.85"/>
+    <text x="62%" y="38%" text-anchor="middle" font-size="6.5" fill="#2d4a2d" font-family="Sora,sans-serif" font-weight="600">AI Tools</text>
+    <circle cx="78%" cy="57%" r="12" fill="#a8d5a2" opacity="0.65"/>
+    <circle cx="24%" cy="63%" r="10" fill="#a8d5a2" opacity="0.55"/>
+  `;
+}
+drawClusters();
+</script>
+</body>
+</html>

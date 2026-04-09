@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samsung HRDC — LMS to LXP Case Study</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0d0d0d;--ink2:#2a2a2a;--muted:#707070;
+  --sep:rgba(0,0,0,0.07);--sep2:rgba(0,0,0,0.04);
+  --bg:#f6f5f2;--surface:#ffffff;--surface2:#f0efec;
+  --navy:#0c1f3f;--navy-mid:#1a3360;--navy-light:#1e4080;
+  --blue:#1a5fd4;--blue-bg:rgba(26,95,212,0.06);
+  --gold:#9a7000;--gold-bg:rgba(154,112,0,0.07);
+  --green:#1a5e35;--green-bg:rgba(26,94,53,0.07);
+  --red:#a82a2a;--red-bg:rgba(168,42,42,0.07);
+  --orange:#b85e00;--orange-bg:rgba(184,94,0,0.07);
+  --r:8px;--r-lg:14px;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'Sora',-apple-system,sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+.shell{display:grid;grid-template-columns:256px 1fr;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--navy);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-header{padding:28px 22px 22px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.s-logo-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.s-logo{width:26px;height:26px;background:white;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.s-logo span{font-size:13px;font-weight:700;color:var(--navy);font-family:var(--sans);line-height:1;}
+.s-org{font-size:10px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);}
+.s-title{font-family:var(--serif);font-size:16px;line-height:1.3;color:white;font-weight:300;font-style:italic;margin-bottom:3px;}
+.s-sub{font-size:10px;color:rgba(255,255,255,0.32);letter-spacing:0.01em;}
+
+.step-nav{padding:14px 0;flex:1;}
+.step-item{display:flex;align-items:center;gap:11px;padding:9px 22px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent;}
+.step-item:hover{background:rgba(255,255,255,0.04);}
+.step-item.active{background:rgba(255,255,255,0.07);border-left-color:rgba(255,255,255,0.4);}
+.step-circle{width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,0.3);transition:all 0.2s;}
+.step-item.active .step-circle{border-color:rgba(255,255,255,0.7);color:rgba(255,255,255,0.9);}
+.step-item.done .step-circle{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.4);}
+.step-label{font-size:11px;font-weight:400;color:rgba(255,255,255,0.38);letter-spacing:0.01em;}
+.step-item.active .step-label{color:rgba(255,255,255,0.9);font-weight:500;}
+.step-item.done .step-label{color:rgba(255,255,255,0.28);}
+.connector{width:1px;height:10px;background:rgba(255,255,255,0.08);margin-left:32px;}
+
+.s-disclaimer{margin:0 22px 0;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:var(--r);border:1px solid rgba(255,255,255,0.08);}
+.s-disclaimer p{font-size:9px;color:rgba(255,255,255,0.3);line-height:1.6;}
+.s-disclaimer strong{color:rgba(255,255,255,0.45);font-weight:500;}
+
+.sidebar-meta{padding:14px 22px;border-top:1px solid rgba(255,255,255,0.07);margin-top:auto;}
+.meta-pill{display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:5px;}
+.meta-pill:last-child{margin-bottom:0;}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.top-bar{height:46px;border-bottom:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:var(--surface);position:sticky;top:0;z-index:10;}
+.progress-track{flex:1;max-width:160px;height:2px;background:var(--sep);border-radius:99px;overflow:hidden;margin:0 20px;}
+.progress-fill{height:100%;background:var(--navy);border-radius:99px;transition:width 0.4s ease;}
+.top-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.03em;text-transform:uppercase;}
+
+/* PANELS */
+.panel-wrap{flex:1;}
+.panel{display:none;padding:50px 52px;max-width:800px;animation:fadeUp 0.2s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+.panel-eyebrow{font-size:9px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.panel-heading{font-family:var(--serif);font-size:30px;line-height:1.2;color:var(--ink);margin-bottom:18px;font-weight:300;}
+em.serif{font-family:var(--serif);font-style:italic;}
+.panel-body{font-size:13px;line-height:1.85;color:var(--ink2);font-weight:300;}
+.gap{margin-top:14px;}
+
+.callout{border-left:2px solid var(--navy);padding:13px 18px;background:rgba(12,31,63,0.04);border-radius:0 var(--r) var(--r) 0;margin:22px 0;}
+.callout p{font-size:13px;font-style:italic;font-family:var(--serif);color:var(--navy-mid);line-height:1.75;margin:0;font-weight:300;}
+
+/* DISCLAIMER BANNER */
+.data-disclaimer{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:10px 14px;background:var(--gold-bg);
+  border:1px solid rgba(154,112,0,0.15);
+  border-radius:var(--r);margin-bottom:20px;font-size:11px;color:var(--gold);line-height:1.6;
+}
+.data-disclaimer svg{flex-shrink:0;margin-top:1px;}
+
+/* OVERVIEW */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start;}
+.chip-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;}
+.chip{font-size:10px;font-weight:500;padding:3px 9px;border-radius:3px;background:var(--surface2);border:1px solid var(--sep);color:var(--ink2);}
+
+/* PLATFORM MOCKUP */
+.platform-shell{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--sep);box-shadow:0 6px 24px rgba(0,0,0,0.07);overflow:hidden;}
+.platform-bar{height:32px;background:var(--navy);display:flex;align-items:center;padding:0 12px;gap:8px;}
+.pb-dot{width:7px;height:7px;border-radius:50%;opacity:0.45;}
+.pb-title{font-size:9px;color:rgba(255,255,255,0.4);margin-left:5px;font-weight:500;letter-spacing:0.04em;}
+.platform-nav{height:32px;background:var(--navy-mid);display:flex;align-items:center;padding:0 12px;}
+.pnav-item{font-size:9px;color:rgba(255,255,255,0.42);padding:0 10px;height:100%;display:flex;align-items:center;border-bottom:2px solid transparent;transition:all 0.15s;}
+.pnav-item.active{color:white;border-bottom-color:white;}
+.platform-body{padding:12px;}
+.ctab-bar{display:flex;gap:2px;background:rgba(0,0,0,0.05);border-radius:5px;padding:2px;margin-bottom:10px;}
+.ctab{flex:1;text-align:center;font-size:8px;font-weight:600;padding:3px 0;border-radius:4px;color:var(--muted);cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;}
+.ctab.active{background:var(--surface);color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,0.07);}
+.section-lbl-sm{font-size:7px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.content-cards{display:flex;gap:5px;margin-bottom:9px;}
+.ccard{flex:1;border-radius:5px;overflow:hidden;border:1px solid var(--sep);}
+.ccard-thumb{height:38px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600;color:white;letter-spacing:0.05em;}
+.ccard-info{padding:4px 5px;background:var(--surface);}
+.ccard-title{font-size:7px;font-weight:500;color:var(--ink);line-height:1.3;margin-bottom:1px;}
+.ccard-meta{font-size:6px;color:var(--muted);}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.scard{background:var(--surface2);border-radius:5px;padding:6px 7px;}
+.scard-lbl{font-size:7px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted);}
+.scard-val{font-size:14px;font-weight:600;color:var(--ink);margin-top:1px;}
+.sbadge{display:inline-block;font-size:6px;font-weight:600;padding:1px 5px;border-radius:2px;margin-top:1px;}
+
+/* META CARDS */
+.meta-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:20px;}
+.meta-card{background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);padding:12px 14px;}
+.mc-label{font-size:8px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.mc-val{font-size:11px;color:var(--ink);line-height:1.5;font-weight:500;}
+
+/* SCREENSHOT */
+.screenshot-wrap{margin:24px 0;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--sep);box-shadow:0 4px 20px rgba(0,0,0,0.07);}
+.screenshot-caption{padding:8px 14px;background:var(--surface2);border-top:1px solid var(--sep);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.screenshot-caption strong{color:var(--ink2);font-weight:500;}
+
+/* GAP CARDS */
+.gap-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.gap-card{padding:13px 15px;background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);}
+.gap-card-top{font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:5px;}
+.gap-card-body{font-size:11px;color:var(--ink2);line-height:1.65;font-weight:300;}
+
+/* DATA */
+.finding-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;}
+.finding-card{background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);padding:13px 15px;}
+.finding-num{font-size:8px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.finding-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:5px;line-height:1.3;}
+.finding-body{font-size:11px;color:var(--muted);line-height:1.6;font-weight:300;}
+.finding-stat{margin-top:9px;padding:7px 10px;background:var(--surface2);border-radius:5px;font-size:10px;font-weight:600;color:var(--navy);}
+
+.chart-wrap{background:var(--surface);border:1px solid var(--sep);border-radius:var(--r);padding:18px;margin-top:12px;}
+.chart-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.chart-title{font-size:11px;font-weight:600;color:var(--ink);}
+.legend{display:flex;gap:12px;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);}
+.legend-dot{width:7px;height:7px;border-radius:50%;}
+.chart-bars{display:flex;gap:5px;align-items:flex-end;height:110px;padding-bottom:22px;position:relative;border-bottom:1px solid var(--sep);}
+.cbg{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.bar-v{border-radius:2px 2px 0 0;width:100%;align-self:flex-end;}
+.bar-lbl{position:absolute;bottom:-18px;font-size:7px;color:var(--muted);text-align:center;width:120%;left:-10%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.paradox-note{margin-top:10px;padding:9px 13px;background:var(--red-bg);border-left:2px solid var(--red);border-radius:0 5px 5px 0;font-size:11px;color:var(--ink2);line-height:1.6;font-weight:300;}
+
+/* ARCS TABLE */
+.arcs-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px;}
+.arcs-table th{background:var(--navy);color:white;padding:9px 12px;text-align:left;font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;}
+.arcs-table th:first-child{border-radius:var(--r) 0 0 0;}
+.arcs-table th:last-child{border-radius:0 var(--r) 0 0;}
+.arcs-table td{padding:9px 12px;border-bottom:1px solid var(--sep);color:var(--ink2);vertical-align:top;line-height:1.55;font-weight:300;}
+.arcs-table tr:last-child td{border-bottom:none;}
+.arcs-table tr:nth-child(even) td{background:var(--surface2);}
+.arcs-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;color:white;}
+
+/* PROCESS */
+.process-steps{display:flex;flex-direction:column;border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;margin-top:18px;}
+.proc-step{display:grid;grid-template-columns:72px 1fr;padding:13px 16px;border-bottom:1px solid var(--sep);background:var(--surface);cursor:pointer;transition:background 0.15s;gap:12px;align-items:start;}
+.proc-step:last-child{border-bottom:none;}
+.proc-step:hover{background:var(--surface2);}
+.proc-step.open{background:rgba(12,31,63,0.03);}
+.proc-num{font-size:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-top:2px;}
+.proc-step.open .proc-num{color:var(--navy);}
+.proc-label{font-size:12px;font-weight:600;color:var(--ink);}
+.proc-step.open .proc-label{color:var(--navy);}
+.proc-detail{font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;display:none;font-weight:300;}
+.proc-step.open .proc-detail{display:block;color:var(--ink2);}
+
+/* STRATEGY */
+.strategy-item{display:grid;grid-template-columns:180px 1fr;gap:0;border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;margin-bottom:8px;}
+.strategy-left{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;}
+.strategy-label{font-size:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:4px;}
+.strategy-name{font-size:12px;font-weight:500;color:white;line-height:1.3;}
+.strategy-right{padding:13px 16px;background:var(--surface);}
+.strategy-right p{font-size:11px;color:var(--ink2);line-height:1.75;font-weight:300;}
+.strategy-right strong{color:var(--navy);font-weight:600;}
+
+/* ROADMAP */
+.roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px;}
+.roadmap-col{border-radius:var(--r);overflow:hidden;border:1px solid var(--sep);}
+.roadmap-header{padding:9px 12px;font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:white;}
+.roadmap-body{padding:9px 12px;background:var(--surface);}
+.roadmap-item{font-size:10px;color:var(--ink2);padding:7px 0;border-bottom:1px solid var(--sep);line-height:1.5;font-weight:300;}
+.roadmap-item:last-child{border-bottom:none;}
+.roadmap-item strong{display:block;font-weight:600;color:var(--ink);margin-bottom:2px;font-size:11px;}
+.roadmap-badge{font-size:8px;color:var(--muted);margin-top:2px;display:block;}
+
+/* OUTCOME */
+.stat-highlights{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;}
+.stat-highlight{background:var(--navy);border-radius:var(--r);padding:16px;text-align:center;}
+.sh-val{font-family:var(--serif);font-size:26px;color:white;margin-bottom:4px;font-weight:300;font-style:italic;}
+.sh-label{font-size:9px;color:rgba(255,255,255,0.42);line-height:1.5;font-weight:300;}
+.outcome-list{list-style:none;padding:0;margin:18px 0;}
+.outcome-list li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--sep);font-size:12px;line-height:1.75;color:var(--ink2);font-weight:300;}
+.outcome-list li:last-child{border-bottom:none;}
+.odot{width:5px;height:5px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-top:9px;}
+.reflection{background:var(--surface2);border-radius:var(--r);padding:16px 20px;margin-top:20px;border:1px solid var(--sep);}
+.reflection-lbl{font-size:8px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.reflection p{font-size:12px;line-height:1.85;color:var(--ink2);font-style:italic;font-family:var(--serif);font-weight:300;}
+
+/* NAV FOOTER */
+.nav-footer{padding:20px 52px;border-top:1px solid var(--sep);display:flex;justify-content:space-between;align-items:center;background:var(--surface);}
+.nav-btn{font-size:11px;font-weight:600;padding:8px 18px;border-radius:var(--r);border:1px solid var(--sep);background:var(--surface);color:var(--ink2);cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;}
+.nav-btn:hover:not(:disabled){background:var(--surface2);}
+.nav-btn.primary{background:var(--navy);color:white;border-color:var(--navy);}
+.nav-btn.primary:hover:not(:disabled){background:var(--navy-mid);}
+.nav-btn:disabled{opacity:0.25;cursor:default;}
+.step-counter{font-size:10px;color:var(--muted);}
+
+.data-heading{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--sep);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="s-logo-row">
+      <div class="s-logo"><span>S</span></div>
+      <span class="s-org">Samsung HRDC</span>
+    </div>
+    <div class="s-title">CIC Platform:<br>LMS to LXP Transition</div>
+    <div class="s-sub">Capstone Project · Instructional Design · 2024</div>
+  </div>
+
+  <nav class="step-nav">
+    <div class="step-item active" onclick="goTo(0)" id="nav-0"><div class="step-circle">1</div><span class="step-label">Overview</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(1)" id="nav-1"><div class="step-circle">2</div><span class="step-label">Problem</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(2)" id="nav-2"><div class="step-circle">3</div><span class="step-label">Analysis</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(3)" id="nav-3"><div class="step-circle">4</div><span class="step-label">Process</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(4)" id="nav-4"><div class="step-circle">5</div><span class="step-label">Recommendations</span></div>
+    <div class="connector"></div>
+    <div class="step-item" onclick="goTo(5)" id="nav-5"><div class="step-circle">6</div><span class="step-label">Outcome</span></div>
+  </nav>
+
+  <div class="s-disclaimer">
+    <p><strong>Note on data:</strong> Figures shown are illustrative approximations. Actual platform data is confidential. All trends and directional findings reflect the original Korean-language analysis.</p>
+  </div>
+
+  <div class="sidebar-meta">
+    <div class="meta-pill">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><path d="M5 2.5V5l1.5 1.5" stroke="rgba(255,255,255,0.25)" stroke-width="0.9" stroke-linecap="round"/></svg>
+      6 sections · ~6 min
+    </div>
+    <div class="meta-pill">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1.5" y="1" width="7" height="8" rx="1" stroke="rgba(255,255,255,0.25)" stroke-width="0.9"/><path d="M3 4h4M3 6h4M3 8h2" stroke="rgba(255,255,255,0.25)" stroke-width="0.7" stroke-linecap="round"/></svg>
+      ARCS · LXP Framework
+    </div>
+    <div class="meta-pill">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><path d="M3 5h4M5 3l2 2-2 2" stroke="rgba(255,255,255,0.25)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Originally in Korean
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="top-bar">
+    <span class="top-label" id="top-label">Overview</span>
+    <div class="progress-track"><div class="progress-fill" id="progress" style="width:16.6%"></div></div>
+    <span class="top-label" id="top-counter">1 / 6</span>
+  </div>
+
+  <div class="panel-wrap">
+
+    <!-- 0: OVERVIEW -->
+    <div class="panel active" id="panel-0">
+      <div class="panel-eyebrow">Samsung HRDC · Capstone Project</div>
+      <h1 class="panel-heading">Diagnosing Samsung's CIC learning platform — a data-driven case for LXP transition.</h1>
+
+      <div class="data-disclaimer">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#9a7000" stroke-width="1.2"/><path d="M6.5 5.5v4M6.5 4h.01" stroke="#9a7000" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span><strong style="font-weight:600">Illustrative data.</strong> Specific figures shown throughout have been adjusted from the original confidential analysis. The original report was written in Korean for Samsung internal use. All directional insights and strategic recommendations are accurate.</span>
+      </div>
+
+      <div class="overview-grid">
+        <div>
+          <p class="panel-body">CIC is Samsung's enterprise-wide learning platform serving employees across multiple subsidiaries. This capstone project combined systematic content analysis with ARCS-based UX diagnosis and LXP transition strategy — proposing data-grounded improvements to close the gap between what CIC offers and what employees actually engage with.</p>
+          <div class="chip-row">
+            <span class="chip">Needs Analysis</span>
+            <span class="chip">Content Data Analysis</span>
+            <span class="chip">ARCS Model</span>
+            <span class="chip">LMS → LXP Strategy</span>
+            <span class="chip">UX Diagnosis</span>
+          </div>
+        </div>
+
+        <div class="platform-shell">
+          <div class="platform-bar">
+            <div class="pb-dot" style="background:#ff5f57"></div>
+            <div class="pb-dot" style="background:#febc2e"></div>
+            <div class="pb-dot" style="background:#28c840"></div>
+            <span class="pb-title">CIC — Samsung Learning Platform</span>
+          </div>
+          <div class="platform-nav">
+            <div class="pnav-item">Feed</div>
+            <div class="pnav-item active">Content</div>
+            <div class="pnav-item">Class</div>
+            <div class="pnav-item">Campus</div>
+          </div>
+          <div class="platform-body">
+            <div class="ctab-bar">
+              <div class="ctab active">Curated</div>
+              <div class="ctab">AI Picks</div>
+              <div class="ctab">Trending</div>
+            </div>
+            <div class="section-lbl-sm">Today's Content</div>
+            <div class="content-cards">
+              <div class="ccard"><div class="ccard-thumb" style="background:linear-gradient(135deg,#1a3360,#1a5fd4)">AI</div><div class="ccard-info"><div class="ccard-title">AI Insights Weekly</div><div class="ccard-meta">Low views · High eng. ↑</div></div></div>
+              <div class="ccard"><div class="ccard-thumb" style="background:linear-gradient(135deg,#2d4a22,#1a5e35)">Book</div><div class="ccard-info"><div class="ccard-title">My Life's Book</div><div class="ccard-meta">High views · Low eng.</div></div></div>
+              <div class="ccard"><div class="ccard-thumb" style="background:linear-gradient(135deg,#4a1a1a,#a82a2a)">Lead</div><div class="ccard-info"><div class="ccard-title">Leadership Lab</div><div class="ccard-meta">Mid views · Avg. eng.</div></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="scard"><div class="scard-lbl">Top Views</div><div class="scard-val">~15K</div><span class="sbadge" style="background:var(--blue-bg);color:var(--blue)">AI Content</span></div>
+              <div class="scard"><div class="scard-lbl">Top Eng.</div><div class="scard-val">~7%</div><span class="sbadge" style="background:var(--red-bg);color:var(--red)">Low-view item</span></div>
+              <div class="scard"><div class="scard-lbl">Avg. Eng.</div><div class="scard-val">~3%</div><span class="sbadge" style="background:var(--surface2);color:var(--muted)">200+ items</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-cards">
+        <div class="meta-card"><div class="mc-label">Role</div><div class="mc-val">HRD Intern<br>Samsung HRDC</div></div>
+        <div class="meta-card"><div class="mc-label">Scope</div><div class="mc-val">CIC Platform<br>200+ contents analyzed</div></div>
+        <div class="meta-card"><div class="mc-label">Framework</div><div class="mc-val">ARCS · LXP Strategy<br>Nielsen UX Heuristics</div></div>
+        <div class="meta-card"><div class="mc-label">Language</div><div class="mc-val">Originally Korean<br>Translated for portfolio</div></div>
+      </div>
+    </div>
+
+    <!-- 1: PROBLEM -->
+    <div class="panel" id="panel-1">
+      <div class="panel-eyebrow">01 · Problem</div>
+      <h2 class="panel-heading">A platform caught between LMS and LXP — with user behavior telling a different story.</h2>
+
+      <p class="panel-body">Post-pandemic, Samsung employees' learning expectations shifted. Accustomed to YouTube, Netflix, and short-form content platforms, users now expect personalized recommendations, intuitive interfaces, and content that respects their time. CIC had begun incorporating LXP-like features — feeds, campus communities, curated playlists. But the core architecture still reflected a compliance-first LMS.</p>
+
+      <div class="callout">
+        <p>How do we move from a platform that manages learning to one that drives it — using real content performance data to close the gap between what CIC offers and what employees actually engage with?</p>
+      </div>
+
+      <!-- CIC Screenshot -->
+      <div class="screenshot-wrap">
+        <img src="cic_screenshot.jpg" alt="CIC Platform UI — annotated screenshots showing feed, content, and campus views" style="width:100%;display:block;">
+        <div class="screenshot-caption">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="1" width="9" height="9" rx="1.5" stroke="var(--muted)" stroke-width="1"/><path d="M1 4h9" stroke="var(--muted)" stroke-width="0.8"/><circle cx="2.5" cy="2.5" r="0.5" fill="var(--muted)"/><circle cx="4" cy="2.5" r="0.5" fill="var(--muted)"/></svg>
+          <span><strong>CIC Platform UI</strong> — Feed, Content, and Campus views with UX annotations. Original interface in Korean; annotated during field observation phase.</span>
+        </div>
+      </div>
+
+      <div class="gap-cards">
+        <div class="gap-card" style="border-top:2px solid var(--navy);">
+          <div class="gap-card-top" style="color:var(--navy);">A · UI/UX Friction</div>
+          <div class="gap-card-body">Close button misplaced in feed popups; "currently watching" buried at bottom; thumbnail text illegibility; mobile touch not optimized.</div>
+        </div>
+        <div class="gap-card" style="border-top:2px solid var(--navy);">
+          <div class="gap-card-top" style="color:var(--navy);">B · Curation Gaps</div>
+          <div class="gap-card-body">Majority of content exceeds 10 minutes; short-form absent; tag search inaccurate; recommendations lack explanatory context.</div>
+        </div>
+        <div class="gap-card" style="border-top:2px solid var(--gold);">
+          <div class="gap-card-top" style="color:var(--gold);">C · AI & Personalization</div>
+          <div class="gap-card-body">No contextual search; no personalized recommendation engine; campus content lacks connection flow, breaking learning journeys.</div>
+        </div>
+        <div class="gap-card" style="border-top:2px solid var(--gold);">
+          <div class="gap-card-top" style="color:var(--gold);">D · Motivation Architecture</div>
+          <div class="gap-card-body">Points and badges exist but rewards are invisible; no internal expert or creator incentive structure to drive content sharing.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2: ANALYSIS -->
+    <div class="panel" id="panel-2">
+      <div class="panel-eyebrow">02 · Analysis</div>
+      <h2 class="panel-heading">200+ contents. Four counterintuitive findings.</h2>
+
+      <div class="data-disclaimer">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#9a7000" stroke-width="1.2"/><path d="M6.5 5.5v4M6.5 4h.01" stroke="#9a7000" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span>Figures below are illustrative. Actual data from the original Korean-language report is confidential. Engagement rate = (likes + comments + shares) / views.</span>
+      </div>
+
+      <p class="panel-body">CIC platform content was systematically analyzed via HTML source extraction — capturing views, engagement signals, content length, and section classification across 200+ published items.</p>
+
+      <div class="finding-cards">
+        <div class="finding-card" style="border-top:2px solid var(--red);">
+          <div class="finding-num">Finding 01</div>
+          <div class="finding-title">The Views–Engagement Paradox</div>
+          <div class="finding-body">High-view sections and high-engagement sections showed opposite patterns. The curation algorithm surfaced popular content, not satisfying content.</div>
+          <div class="finding-stat">Hidden gem: ~200 views → ~7% engagement (rank #1 in satisfaction)</div>
+        </div>
+        <div class="finding-card" style="border-top:2px solid var(--blue);">
+          <div class="finding-num">Finding 02</div>
+          <div class="finding-title">AI Content: Consistent High Performance</div>
+          <div class="finding-body">Every AI-related section maintained 4%+ engagement consistently — well above platform average — yet supply was severely limited relative to demand.</div>
+          <div class="finding-stat">AI content: ~40% higher engagement vs. platform avg.</div>
+        </div>
+        <div class="finding-card" style="border-top:2px solid var(--gold);">
+          <div class="finding-num">Finding 03</div>
+          <div class="finding-title">Passive Consumption in Reading Content</div>
+          <div class="finding-body">Book/reading content had the second-highest views but one of the lowest engagement rates — users browse but don't interact or share.</div>
+          <div class="finding-stat">High views / Low engagement → passive scrolling behavior</div>
+        </div>
+        <div class="finding-card" style="border-top:2px solid var(--green);">
+          <div class="finding-num">Finding 04</div>
+          <div class="finding-title">Social Proof Works at Scale</div>
+          <div class="finding-body">"What people are watching now" maintained strong engagement across a large content pool — social context drives selection.</div>
+          <div class="finding-stat">Large-pool section: ~4.5% avg. engagement confirmed</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title-row">
+          <div class="chart-title">Section Performance: Views vs. Engagement Rate (illustrative)</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#1a3360"></div>Avg. Views</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Engagement %</div>
+          </div>
+        </div>
+        <div style="position:relative;">
+          <div class="chart-bars" id="chartBars"></div>
+          <svg id="engLine" style="position:absolute;top:0;left:0;width:100%;height:110px;pointer-events:none;overflow:visible;"></svg>
+        </div>
+        <div class="paradox-note">
+          <strong style="color:var(--red)">The paradox:</strong> The section with the highest engagement score received among the fewest views — buried by a view-count-based algorithm. The most satisfying content was the least visible.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: PROCESS -->
+    <div class="panel" id="panel-3">
+      <div class="panel-eyebrow">03 · Process</div>
+      <h2 class="panel-heading">From platform observation to strategic diagnosis.</h2>
+      <p class="panel-body">The project followed a structured consulting-style process: field observation, data collection, theoretical framework application, empirical analysis, and strategy formulation. Click each step to expand.</p>
+
+      <div class="process-steps">
+        <div class="proc-step open" onclick="toggleProc(this)">
+          <div class="proc-num">Step 01</div>
+          <div><div class="proc-label">Platform Observation & Data Collection</div>
+          <div class="proc-detail">Conducted systematic observation of CIC as an active intern user. Extracted content metadata from 200+ published items via HTML source analysis — capturing views, engagement signals (likes, comments, shares), duration, upload date, and section. Built a structured dataset for quantitative analysis.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 02</div>
+          <div><div class="proc-label">ARCS Framework Diagnostic</div>
+          <div class="proc-detail">Applied Keller's ARCS model (Attention, Relevance, Confidence, Satisfaction) to assess CIC's learning motivation architecture. Mapped each platform feature to an ARCS element, identifying structural gaps that the quantitative data later confirmed empirically.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 03</div>
+          <div><div class="proc-label">LMS → LXP Literature Review</div>
+          <div class="proc-detail">Reviewed LXP transition frameworks, Nielsen's usability heuristics, and mobile-first design principles. Benchmarked CIC against leading LXP platforms (Degreed, EdCast, Viva Learning) to identify specific experience gaps relevant to enterprise-scale deployment at Samsung.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 04</div>
+          <div><div class="proc-label">Empirical Content Analysis</div>
+          <div class="proc-detail">Calculated engagement rates across all items and aggregated by section. Cross-referenced quantitative findings with qualitative UX observations to surface the views–engagement paradox and identify high-ROI content categories. Written and analyzed entirely in Korean for Samsung internal stakeholders.</div></div>
+        </div>
+        <div class="proc-step" onclick="toggleProc(this)">
+          <div class="proc-num">Step 05</div>
+          <div><div class="proc-label">Strategy Formulation & Roadmap</div>
+          <div class="proc-detail">Translated findings into a phased action roadmap — categorizing improvements into immediate algorithmic fixes, medium-term recommendation engine development, and long-term LXP transition architecture with personalized learning paths.</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <div class="data-heading">ARCS Diagnostic Summary</div>
+        <table class="arcs-table">
+          <thead>
+            <tr><th>ARCS</th><th>CIC Strength</th><th>Gap Identified</th><th>Data Signal</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="arcs-badge" style="background:#0c1f3f">Attention</span></td>
+              <td>Curated content, feed/vlog features</td>
+              <td>Non-intuitive UI; no short-form entry; high-engagement content hidden</td>
+              <td>Top-engagement section buried at low visibility rank</td>
+            </tr>
+            <tr>
+              <td><span class="arcs-badge" style="background:#1a5fd4">Relevance</span></td>
+              <td>Some role-based content; AI trend attempts</td>
+              <td>Global content lacking; tag accuracy low; no personalized curation</td>
+              <td>AI sections: consistent high engagement, severe undersupply</td>
+            </tr>
+            <tr>
+              <td><span class="arcs-badge" style="background:#9a7000">Confidence</span></td>
+              <td>Campus communities; "currently watching"</td>
+              <td>AI recommendation missing; re-entry UX buried; learning path unclear</td>
+              <td>Social proof section: strong engagement confirmed at scale</td>
+            </tr>
+            <tr>
+              <td><span class="arcs-badge" style="background:#1a5e35">Satisfaction</span></td>
+              <td>Badge system; feed sharing culture</td>
+              <td>Reward visibility near zero; no expert/creator incentives</td>
+              <td>Reading: high views / low engagement → passive consumption</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4: RECOMMENDATIONS -->
+    <div class="panel" id="panel-4">
+      <div class="panel-eyebrow">04 · Recommendations</div>
+      <h2 class="panel-heading">Three data-backed strategies. One phased roadmap.</h2>
+      <p class="panel-body">All recommendations are grounded directly in the content dataset. The overarching principle: move from a view-count-driven platform to an engagement-quality-driven learning experience.</p>
+
+      <div style="margin-top:22px;margin-bottom:22px;">
+        <div class="data-heading">Core Strategic Proposals</div>
+        <div class="strategy-item">
+          <div class="strategy-left" style="background:var(--navy);">
+            <div class="strategy-label">Strategy 01</div>
+            <div class="strategy-name">Hybrid Curation Algorithm</div>
+          </div>
+          <div class="strategy-right">
+            <p>Replace view-count-only ranking with a weighted hybrid: <strong>Score = (engagement rate × 0.7) + (normalized views × 0.3)</strong>. Surfaces hidden high-quality content while maintaining broad discovery. Immediately deployable without new infrastructure.</p>
+          </div>
+        </div>
+        <div class="strategy-item">
+          <div class="strategy-left" style="background:var(--navy-mid);">
+            <div class="strategy-label">Strategy 02</div>
+            <div class="strategy-name">AI Content Hub Expansion</div>
+          </div>
+          <div class="strategy-right">
+            <p>AI-related content shows <strong>~40% higher engagement than platform average</strong> yet supply is severely limited. Expand to a dedicated AI Learning Hub, integrate real-time trend content, and position AI sections as primary entry points for upskilling-motivated learners.</p>
+          </div>
+        </div>
+        <div class="strategy-item">
+          <div class="strategy-left" style="background:#2d4a22;">
+            <div class="strategy-label">Strategy 03</div>
+            <div class="strategy-name">"Hidden Gem" Auto-Discovery</div>
+          </div>
+          <div class="strategy-right">
+            <p>Create an automated flag for content with <strong>high engagement + low views</strong> for featured placement. A "You might have missed this" section surfaces high-quality underexposed content before the view-based algorithm buries it further.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-heading">Implementation Roadmap</div>
+      <div class="roadmap">
+        <div class="roadmap-col">
+          <div class="roadmap-header" style="background:var(--navy)">Short-term · Now</div>
+          <div class="roadmap-body">
+            <div class="roadmap-item"><strong>Engagement-based exposure fix</strong>Surface top-engagement content above fold; create Hidden Gem section<span class="roadmap-badge">Evidence: views–engagement gap</span></div>
+            <div class="roadmap-item"><strong>AI content expansion</strong>Expand AI content supply; add weekly trend content<span class="roadmap-badge">Evidence: consistent 4%+ engagement</span></div>
+          </div>
+        </div>
+        <div class="roadmap-col">
+          <div class="roadmap-header" style="background:var(--navy-mid)">Mid-term</div>
+          <div class="roadmap-body">
+            <div class="roadmap-item"><strong>Hybrid recommendation algo</strong>70% engagement + 30% views weighting deployed<span class="roadmap-badge">Closes views–engagement gap</span></div>
+            <div class="roadmap-item"><strong>Social proof enhancement</strong>"Why recommended" + "colleagues like you watched"<span class="roadmap-badge">Evidence: social proof effect confirmed</span></div>
+          </div>
+        </div>
+        <div class="roadmap-col">
+          <div class="roadmap-header" style="background:#2d4a22">Long-term · LXP Vision</div>
+          <div class="roadmap-body">
+            <div class="roadmap-item"><strong>Reward visibility system</strong>Engagement-based recognition; AI Creator program<span class="roadmap-badge">Address passive consumption</span></div>
+            <div class="roadmap-item"><strong>Full LXP transition</strong>Personalized learning paths; individual development planning<span class="roadmap-badge">Integrated data strategy</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5: OUTCOME -->
+    <div class="panel" id="panel-5">
+      <div class="panel-eyebrow">05 · Outcome</div>
+      <h2 class="panel-heading">Evidence-based recommendations for a platform serving thousands of Samsung employees.</h2>
+
+      <div class="stat-highlights">
+        <div class="stat-highlight"><div class="sh-val">200+</div><div class="sh-label">Contents systematically analyzed across CIC platform</div></div>
+        <div class="stat-highlight"><div class="sh-val">~40%</div><div class="sh-label">Higher engagement in AI content vs. platform average</div></div>
+        <div class="stat-highlight"><div class="sh-val">4×</div><div class="sh-label">Engagement gap between top and average content sections</div></div>
+      </div>
+
+      <ul class="outcome-list">
+        <li><span class="odot"></span><span>Delivered a comprehensive diagnostic report (in Korean) revealing the views–engagement paradox — demonstrating that Samsung's curation algorithm actively surfaced less satisfying content to more users.</span></li>
+        <li><span class="odot"></span><span>Applied ARCS model across all four motivation dimensions, backed by empirical content data — producing theory-grounded, actionable recommendations rather than intuition-based suggestions.</span></li>
+        <li><span class="odot"></span><span>Proposed a hybrid recommendation algorithm as an immediately deployable fix, requiring no new infrastructure — a practical constraint given enterprise system complexity.</span></li>
+        <li><span class="odot"></span><span>Identified AI content as Samsung's highest-ROI content investment opportunity — consistent high engagement across all AI sections with severe under-supply relative to employee demand.</span></li>
+        <li><span class="odot"></span><span>Produced a phased LXP transition roadmap spanning immediate UX fixes, mid-term algorithm improvements, and long-term personalized learning path architecture.</span></li>
+      </ul>
+
+      <div class="reflection">
+        <div class="reflection-lbl">Analyst's Reflection</div>
+        <p>The most counterintuitive moment came when the data showed the highest-engagement section — one I'd initially dismissed as generic — sitting at the bottom of the visibility ranking. That single finding reframed the entire project: the problem wasn't content quality, it was measurement. A platform optimizing for the wrong metric will systematically reward the wrong content. That's a learning system design problem, not a content problem — and it's exactly the gap that instructional designers are positioned to close.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav-footer">
+    <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Previous</button>
+    <span class="step-counter" id="footer-counter">Section 1 of 6</span>
+    <button class="nav-btn primary" id="btn-next" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+</div>
+
+<script>
+const labels=['Overview','Problem','Analysis','Process','Recommendations','Outcome'];
+let cur=0;const total=6;
+
+function goTo(n){
+  document.getElementById('panel-'+cur).classList.remove('active');
+  const pn=document.getElementById('nav-'+cur);
+  pn.classList.remove('active');
+  if(n>cur)pn.classList.add('done');
+  else pn.classList.remove('done');
+  cur=n;
+  document.getElementById('panel-'+cur).classList.add('active');
+  const cn=document.getElementById('nav-'+cur);
+  cn.classList.remove('done');cn.classList.add('active');
+  document.getElementById('progress').style.width=((cur+1)/total*100).toFixed(1)+'%';
+  document.getElementById('top-label').textContent=labels[cur];
+  document.getElementById('top-counter').textContent=(cur+1)+' / '+total;
+  document.getElementById('footer-counter').textContent='Section '+(cur+1)+' of '+total;
+  document.getElementById('btn-prev').disabled=cur===0;
+  document.getElementById('btn-next').textContent=cur===total-1?'Finish ✓':'Next →';
+  if(cur===2)setTimeout(renderChart,80);
+}
+function navigate(dir){const n=cur+dir;if(n>=0&&n<total)goTo(n);}
+function toggleProc(el){
+  const was=el.classList.contains('open');
+  document.querySelectorAll('.proc-step').forEach(s=>s.classList.remove('open'));
+  if(!was)el.classList.add('open');
+}
+
+const chartData=[
+  {label:'AI Learning',views:0.95,eng:4.8},
+  {label:'Book/Reading',views:0.80,eng:2.9},
+  {label:'Social Proof',views:0.55,eng:4.5},
+  {label:'Leadership',views:0.42,eng:3.1},
+  {label:'AI Insights+',views:0.18,eng:4.4},
+  {label:"Today's Pick",views:0.06,eng:6.8},
+];
+
+function renderChart(){
+  const wrap=document.getElementById('chartBars');
+  if(!wrap||wrap.dataset.rendered)return;
+  wrap.dataset.rendered='1';
+  chartData.forEach(d=>{
+    const div=document.createElement('div');
+    div.className='cbg';
+    const pct=Math.round(d.views*100);
+    div.innerHTML=`<div class="bar-v" style="height:${pct}%;background:#0c1f3f;opacity:${0.35+d.views*0.55};"></div><span class="bar-lbl">${d.label}</span>`;
+    wrap.appendChild(div);
+  });
+  setTimeout(()=>{
+    const groups=wrap.querySelectorAll('.cbg');
+    const svg=document.getElementById('engLine');
+    const maxE=Math.max(...chartData.map(d=>d.eng));
+    const pts=[];
+    groups.forEach((g,i)=>{
+      const r=g.getBoundingClientRect();
+      const wr=wrap.getBoundingClientRect();
+      const x=r.left-wr.left+r.width/2;
+      const y=110-(chartData[i].eng/maxE*100);
+      pts.push({x,y,eng:chartData[i].eng});
+    });
+    let path=`M ${pts[0].x} ${pts[0].y}`;
+    for(let i=1;i<pts.length;i++){
+      const cx=(pts[i-1].x+pts[i].x)/2;
+      path+=` C ${cx} ${pts[i-1].y} ${cx} ${pts[i].y} ${pts[i].x} ${pts[i].y}`;
+    }
+    svg.innerHTML=`<path d="${path}" fill="none" stroke="#a82a2a" stroke-width="1.8" stroke-linecap="round"/>`;
+    pts.forEach(p=>{
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','3.5');
+      c.setAttribute('fill','#a82a2a');c.setAttribute('stroke','white');c.setAttribute('stroke-width','1.5');
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',p.x);t.setAttribute('y',p.y-7);
+      t.setAttribute('text-anchor','middle');t.setAttribute('font-size','7.5');
+      t.setAttribute('fill','#a82a2a');t.setAttribute('font-weight','600');t.setAttribute('font-family','Sora,sans-serif');
+      t.textContent='~'+p.eng+'%';
+      svg.appendChild(c);svg.appendChild(t);
+    });
+  },60);
+}
+</script>
+</body>
+</html>

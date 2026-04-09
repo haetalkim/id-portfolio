@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jiin Hur — Instructional Design</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --orange:#ff5a00;
+  --ink:#111;--ink2:#444;--muted:#888;
+  --sep:rgba(0,0,0,0.1);
+  --bg:#fff;--surface:#fff;--surface2:#f7f7f5;
+  --sans:'Sora',-apple-system,sans-serif;
+  --r:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* NAV */
+nav{
+  padding:18px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--sep);
+}
+.nav-brand{font-size:18px;font-weight:700;letter-spacing:-0.02em;color:var(--ink);text-decoration:none;}
+.nav-brand sup{font-size:10px;font-weight:400;letter-spacing:0;}
+.nav-right{display:flex;align-items:center;gap:20px;}
+.nav-right a{font-size:12px;color:var(--muted);text-decoration:none;font-weight:400;}
+.nav-right a:hover{color:var(--ink);}
+.nav-back{
+  font-size:12px;font-weight:500;color:var(--ink2);
+  text-decoration:none;display:flex;align-items:center;gap:5px;
+}
+.nav-back:hover{color:var(--orange);}
+
+/* HERO */
+.hero{
+  padding:56px 48px 48px;
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1fr auto;
+  gap:40px;align-items:end;
+  border-bottom:1px solid var(--sep);
+}
+.hero-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+}
+.hero-title{
+  font-size:42px;font-weight:700;letter-spacing:-0.03em;
+  line-height:1.1;color:var(--ink);margin-bottom:14px;
+}
+.hero-title span{color:var(--orange);}
+.hero-desc{
+  font-size:14px;color:var(--ink2);line-height:1.75;
+  font-weight:300;max-width:520px;
+}
+.hero-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px;}
+.htag{
+  font-size:11px;font-weight:500;padding:5px 13px;
+  border-radius:6px;border:1px solid var(--sep);
+  background:var(--surface2);color:var(--ink2);
+}
+.htag.accent{
+  border-color:rgba(255,90,0,0.2);
+  background:rgba(255,90,0,0.05);color:var(--orange);
+}
+
+.hero-stats{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid var(--sep);border-radius:var(--r);
+  overflow:hidden;flex-shrink:0;
+}
+.hstat{
+  padding:16px 24px;border-bottom:1px solid var(--sep);
+  text-align:right;
+}
+.hstat:last-child{border-bottom:none;}
+.hstat-val{font-size:24px;font-weight:700;color:var(--ink);line-height:1;}
+.hstat-label{font-size:10px;font-weight:400;color:var(--muted);margin-top:3px;letter-spacing:0.04em;}
+
+/* SECTION */
+.section{padding:40px 48px 64px;max-width:1100px;margin:0 auto;}
+.section-top{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:20px;
+}
+.section-title{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.section-count{font-size:11px;color:var(--muted);}
+
+/* CARD GRID */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+
+.card{
+  border:1px solid var(--sep);border-radius:var(--r);
+  overflow:hidden;text-decoration:none;color:inherit;
+  background:var(--surface);
+  display:flex;flex-direction:column;
+  transition:box-shadow 0.18s,border-color 0.18s;
+}
+.card:hover{
+  box-shadow:0 6px 24px rgba(0,0,0,0.08);
+  border-color:rgba(0,0,0,0.18);
+}
+
+/* card thumbnail */
+.card-thumb{
+  width:100%;aspect-ratio:16/9;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  flex-shrink:0;
+}
+.card-thumb-label{
+  font-size:11px;font-weight:600;letter-spacing:0.06em;
+  text-transform:uppercase;color:white;opacity:0.7;
+}
+
+/* card body */
+.card-body{
+  padding:18px 18px 16px;
+  flex:1;display:flex;flex-direction:column;
+}
+.card-num{
+  font-size:9px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+}
+.card-title{
+  font-size:16px;font-weight:700;letter-spacing:-0.01em;
+  color:var(--ink);line-height:1.2;margin-bottom:6px;
+}
+.card-sub{
+  font-size:11px;color:var(--muted);line-height:1.6;
+  font-weight:300;flex:1;
+}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;}
+.ctag{
+  font-size:10px;font-weight:500;padding:3px 8px;
+  border-radius:5px;border:1px solid var(--sep);
+  color:var(--muted);background:var(--surface2);
+}
+
+/* card footer */
+.card-footer{
+  padding:12px 18px;border-top:1px solid var(--sep);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-time{font-size:10px;color:var(--muted);}
+.card-cta{
+  font-size:11px;font-weight:600;color:var(--ink2);
+  display:flex;align-items:center;gap:4px;
+  transition:color 0.15s;
+}
+.card:hover .card-cta{color:var(--orange);}
+
+/* ABOUT */
+.about{
+  border-top:1px solid var(--sep);
+  padding:36px 48px;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:32px;
+  max-width:1100px;margin:0 auto;
+}
+.about-col{}
+.about-label{
+  font-size:10px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+}
+.about-val{font-size:13px;color:var(--ink2);line-height:1.7;font-weight:300;}
+.about-val strong{font-weight:600;color:var(--ink);}
+.about-val a{color:var(--orange);text-decoration:none;}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--sep);
+  padding:18px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.footer-left{font-size:12px;color:var(--muted);}
+.footer-left a{color:var(--orange);text-decoration:none;}
+.footer-right{display:flex;gap:16px;}
+.footer-right a{font-size:12px;color:var(--muted);text-decoration:none;}
+.footer-right a:hover{color:var(--ink);}
+
+@media(max-width:800px){
+  nav,footer{padding:16px 20px;}
+  .hero,.section,.about{padding-left:20px;padding-right:20px;}
+  .hero{grid-template-columns:1fr;}
+  .hero-stats{flex-direction:row;align-self:auto;}
+  .hstat{border-bottom:none;border-right:1px solid var(--sep);}
+  .hstat:last-child{border-right:none;}
+  .card-grid{grid-template-columns:1fr;}
+  .about{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="https://www.jiinhur.com" class="nav-back">← jiinhur.com</a>
+  <div class="nav-right">
+    <a href="https://www.linkedin.com/in/jiinhur920/" target="_blank">LinkedIn</a>
+    <a href="mailto:jh4674@tc.columbia.edu">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="border-bottom:1px solid var(--sep);">
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow">Jiin Hur · Instructional Design Portfolio</div>
+    <h1 class="hero-title">Designing learning<br>that <span>works.*</span></h1>
+    <p class="hero-desc">Three end-to-end case studies — K–12 curriculum design, corporate L&D strategy, and research-driven EdTech. Each shows the full process from problem framing to deployed artifact.</p>
+    <div class="hero-tags">
+      <span class="htag accent">Data-driven</span>
+      <span class="htag accent">Research-grounded</span>
+      <span class="htag accent">Full-stack capable</span>
+      <span class="htag">ADDIE · SAM · ARCS · KB Theory</span>
+      <span class="htag">Bilingual EN / KR</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat">
+      <div class="hstat-val">6+</div>
+      <div class="hstat-label">Years in L&D</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val">3</div>
+      <div class="hstat-label">Case studies</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val">4.0</div>
+      <div class="hstat-label">GPA · TC Columbia</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CARDS -->
+<div class="section">
+  <div class="section-top">
+    <span class="section-title">Case Studies</span>
+    <span class="section-count">3 projects</span>
+  </div>
+
+  <div class="card-grid">
+
+    <!-- 01 AirBioCivic -->
+    <a class="card" href="airbio/index.html">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);">
+        <div class="card-thumb-label">K–12 · EdTech</div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">01 · AirBioCivic</div>
+        <div class="card-title">K–12 Environmental Inquiry System</div>
+        <div class="card-sub">6-module SSI curriculum, live sensor data platform, and instructor guide. Tech Design Team Lead, Tamgu Lab · TC Columbia.</div>
+        <div class="card-tags">
+          <span class="ctag">Curriculum Design</span>
+          <span class="ctag">Platform Dev</span>
+          <span class="ctag">UX Audit</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-time">~5 min · Live platform ↗</span>
+        <span class="card-cta">Open →</span>
+      </div>
+    </a>
+
+    <!-- 02 Samsung -->
+    <a class="card" href="samsung/index.html">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#0c1f3f,#1a3360);">
+        <div class="card-thumb-label">Corporate L&D</div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">02 · Samsung HRDC</div>
+        <div class="card-title">CIC Platform LXP Transition</div>
+        <div class="card-sub">Analysis of 200+ content items revealing the views–engagement paradox. Phased LXP roadmap for enterprise learning. HRD Intern · Samsung.</div>
+        <div class="card-tags">
+          <span class="ctag">Data Analysis</span>
+          <span class="ctag">ARCS</span>
+          <span class="ctag">LXP Strategy</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-time">~6 min · Illustrative data</span>
+        <span class="card-cta">Open →</span>
+      </div>
+    </a>
+
+    <!-- 03 DiscourseMap -->
+    <a class="card" href="discoursemap/index.html">
+      <div class="card-thumb" style="background:linear-gradient(135deg,#1e0a3c,#4a2080);">
+        <div class="card-thumb-label">Research · EdTech</div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">03 · DiscourseMap</div>
+        <div class="card-title">Epistemic Visibility in LMS Discussion</div>
+        <div class="card-sub">Canvas plugin making discussion structure visible in real time. KB theory, synthetic evaluation (15 sessions). Cogmos Lab · TC Columbia.</div>
+        <div class="card-tags">
+          <span class="ctag">KB Theory</span>
+          <span class="ctag">Canvas Plugin</span>
+          <span class="ctag">Research Design</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-time">~6 min · Live prototype ↗</span>
+        <span class="card-cta">Open →</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="about">
+  <div class="about-col">
+    <div class="about-label">Background</div>
+    <div class="about-val">
+      <strong>Jiin Hur</strong><br>
+      M.A. Instructional Technology & Media<br>
+      Teachers College, Columbia University<br>
+      GPA 4.0 · Expected May 2026
+    </div>
+  </div>
+  <div class="about-col">
+    <div class="about-label">Experience</div>
+    <div class="about-val">
+      6 years · LNK Academy Senior Instructor<br>
+      Samsung HRDC · HRD Intern<br>
+      Tamgu Lab · Cogmos Lab Researcher<br>
+      Bilingual — English / Korean
+    </div>
+  </div>
+  <div class="about-col">
+    <div class="about-label">Get in touch</div>
+    <div class="about-val">
+      <a href="mailto:jh4674@tc.columbia.edu">jh4674@tc.columbia.edu</a><br>
+      <a href="https://www.linkedin.com/in/jiinhur920/" target="_blank">linkedin.com/in/jiinhur920</a><br>
+      <a href="https://www.jiinhur.com">jiinhur.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">Part of <a href="https://www.jiinhur.com">jiinhur.com</a></div>
+  <div class="footer-right">
+    <a href="https://www.jiinhur.com">Main site</a>
+    <a href="https://www.linkedin.com/in/jiinhur920/" target="_blank">LinkedIn</a>
+    <a href="mailto:jh4674@tc.columbia.edu">Contact</a>
+  </div>
+</footer>
+
+</body>
+</html>
